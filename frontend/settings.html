@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMISTOCK - Paramètres</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f4f7f9; color: #1e293b; }
+        
+        /* Sidebar OMISTOCK (Conservée pour la cohérence globale) */
+        .sidebar { background: #475569; }
+        .sidebar .active { background: #4fd1c5; color: white; border-radius: 12px; }
+        .sidebar .nav-item { color: #e2e8f0; transition: all 0.3s; padding: 12px 16px; border-radius: 12px; }
+        .sidebar .nav-item:hover:not(.active) { background: rgba(255,255,255,0.1); }
+        
+        /* Cartes Style Honestoc (depuis les maquettes) */
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03); border: 1px solid #f1f5f9; }
+        
+        /* Boutons personnalisés */
+        .btn-outline-blue { border: 1px solid #1e3a8a; color: #1e3a8a; border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; }
+        .btn-outline-blue:hover { background: #eff6ff; }
+        .btn-outline-red { border: 1px solid #e11d48; color: #e11d48; border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; }
+        .btn-outline-red:hover { background: #fff1f2; }
+        .btn-solid-blue { background: #174092; color: white; border-radius: 8px; padding: 10px 20px; font-weight: 600; transition: all 0.2s; }
+        .btn-solid-blue:hover { background: #1e3a8a; }
+
+        /* Inputs */
+        .input-field { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 0.875rem; color: #334155; transition: border-color 0.2s; }
+        .input-field:focus { outline: none; border-color: #174092; box-shadow: 0 0 0 3px rgba(23, 64, 146, 0.1); }
+        .input-label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: 500; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #174092; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #174092; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar (OMISTOCK) -->
+    <aside class="sidebar w-64 flex flex-col p-6 text-white fixed h-full z-50">
+        <div class="mb-10 flex items-center gap-3 bg-white p-3 rounded-xl">
+            <div class="w-8 h-8 flex items-center justify-center">
+                <svg class="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+            <h2 class="text-sm font-bold text-slate-800 tracking-tight truncate" id="company_name_sidebar">OMISTOCK</h2>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <a href="dashboard.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <span class="font-medium text-sm">Dashboard</span>
+            </a>
+            <a href="inventory.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <span class="font-medium text-sm">Stock</span>
+            </a>
+            <a href="sales.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span class="font-medium text-sm">Commandes</span>
+            </a>
+            <a href="suppliers.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span class="font-medium text-sm">Fournisseurs</span>
+            </a>
+            <a href="reports.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="font-medium text-sm">Rapports</span>
+            </a>
+            <a href="logs.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="font-medium text-sm">Activity Logs</span>
+            </a>
+            <a href="settings.html" class="nav-item active flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="font-medium text-sm">Paramètres</span>
+            </a>
+        </nav>
+        
+        <div class="mt-auto pt-4 border-t border-slate-500 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs" id="user_avatar">A</div>
+            <div class="flex-1 truncate">
+                <p class="text-xs font-semibold truncate" id="user_email_sidebar">...</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 flex flex-col">
+        <!-- Top Bar -->
+        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-10 sticky top-0">
+            <h1 class="text-xl font-bold text-slate-800">Paramètres</h1>
+            <button class="text-slate-600 hover:text-slate-900 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            </button>
+        </header>
+
+        <div class="p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Column: User Profile -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="card p-6 flex flex-col items-center text-center">
+                    <div class="w-28 h-28 rounded-full bg-[#174092] text-white flex items-center justify-center text-4xl font-semibold mb-4 shadow-md" id="profile_avatar">
+                        SA
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-800 mb-1" id="profile_name">Chargement...</h2>
+                    <p class="text-slate-500 text-sm font-medium mb-1">Administrateur</p>
+                    <a href="#" class="text-[#174092] text-sm hover:underline mb-6" id="profile_email">...</a>
+
+                    <div class="w-full space-y-3 mb-6">
+                        <button class="w-full btn-outline-blue flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            Modifier Profil
+                        </button>
+                        <button onclick="logout()" class="w-full btn-outline-red flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            Déconnexion
+                        </button>
+                    </div>
+
+                    <div class="w-full text-left border-t border-slate-100 pt-6">
+                        <h3 class="text-sm font-bold text-slate-800 mb-5">Informations de Contact</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-4">
+                                <div class="text-slate-400 mt-0.5"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg></div>
+                                <div>
+                                    <p class="text-xs text-slate-500 mb-0.5">Email</p>
+                                    <p class="text-sm font-medium text-slate-700" id="contact_email">...</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="text-slate-400 mt-0.5"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg></div>
+                                <div>
+                                    <p class="text-xs text-slate-500 mb-0.5">Téléphone</p>
+                                    <p class="text-sm font-medium text-slate-700">+213 21 45 67 89</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="text-slate-400 mt-0.5"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg></div>
+                                <div>
+                                    <p class="text-xs text-slate-500 mb-0.5">Localisation</p>
+                                    <p class="text-sm font-medium text-slate-700" id="contact_location">Algérie</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Settings Sections -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Informations de l'Entreprise -->
+                <div class="card p-6">
+                    <div class="flex items-center gap-2 mb-6">
+                        <svg class="w-5 h-5 text-[#174092]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <h2 class="text-lg font-bold text-slate-800">Informations de l'Entreprise</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="input-label">Nom de l'entreprise</label>
+                            <input type="text" class="input-field" id="input_company_name" value="Chargement...">
+                        </div>
+                        <div>
+                            <label class="input-label">Secteur d'activité</label>
+                            <input type="text" class="input-field" value="Distribution et Commerce">
+                        </div>
+                        <div>
+                            <label class="input-label">NIF (Numéro d'Identification Fiscale)</label>
+                            <input type="text" class="input-field" id="input_company_nif" value="000416000987654">
+                        </div>
+                        <div>
+                            <label class="input-label">RC (Registre du Commerce)</label>
+                            <input type="text" class="input-field" id="input_company_rc" value="16/00-0123456B20">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="input-label">Adresse</label>
+                            <input type="text" class="input-field" id="input_company_address" value="Zone Industrielle">
+                        </div>
+                        <div>
+                            <label class="input-label">Email</label>
+                            <input type="email" class="input-field" id="input_company_email" value="contact@entreprise.dz">
+                        </div>
+                        <div>
+                            <label class="input-label">Téléphone</label>
+                            <input type="text" class="input-field" value="+213 23 88 99 77">
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button class="btn-solid-blue" onclick="saveSettings()">Enregistrer les Modifications</button>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="card p-6">
+                    <div class="flex items-center gap-2 mb-6">
+                        <svg class="w-5 h-5 text-[#174092]" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>
+                        <h2 class="text-lg font-bold text-slate-800">Notifications</h2>
+                    </div>
+
+                    <div class="space-y-4 divide-y divide-slate-100">
+                        <div class="flex items-center justify-between pt-2">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">Alertes de stock faible</p>
+                                <p class="text-xs text-slate-500">Recevoir une notification quand un produit atteint le seuil minimum</p>
+                            </div>
+                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="toggle1" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                <label for="toggle1" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer"></label>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between pt-4">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">Notifications par email</p>
+                                <p class="text-xs text-slate-500">Recevoir les alertes importantes par email</p>
+                            </div>
+                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="toggle2" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                <label for="toggle2" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer"></label>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">Mouvements de stock</p>
+                                <p class="text-xs text-slate-500">Notifications pour chaque mouvement de stock</p>
+                            </div>
+                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="toggle3" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                <label for="toggle3" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer"></label>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">Commandes fournisseurs</p>
+                                <p class="text-xs text-slate-500">Notifications sur l'état des commandes</p>
+                            </div>
+                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="toggle4" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                                <label for="toggle4" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Sécurité & Apparence -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5 text-[#174092]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                            <h2 class="text-lg font-bold text-slate-800">Sécurité</h2>
+                        </div>
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-800">Modifier le mot de passe</p>
+                                    <p class="text-xs text-slate-500">Dernière modification : Il y a 30 jours</p>
+                                </div>
+                            </div>
+                            <button class="text-slate-400 hover:text-slate-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                        </div>
+                        <button class="w-full btn-outline-blue text-sm">Changer le Mot de Passe</button>
+                    </div>
+
+                    <div class="card p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5 text-[#174092]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.515v8.728zM16.515 14.9L14.4 17H18v-2.1l-1.485-.001z" clip-rule="evenodd"></path></svg>
+                            <h2 class="text-lg font-bold text-slate-800">Apparence</h2>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-xs text-slate-500 mb-1">Thème</p>
+                                <p class="text-sm font-semibold text-slate-800">Clair (Par défaut)</p>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                                    <div>
+                                        <p class="text-xs text-slate-500 mb-0.5">Langue</p>
+                                        <p class="text-sm font-semibold text-slate-800">Français</p>
+                                    </div>
+                                </div>
+                                <button class="text-slate-400 hover:text-slate-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function init() {
+            const token = localStorage.getItem('omistock_token');
+            if (!token) { window.location.href = 'index.html'; return; }
+            
+            // Récupération dynamique de l'utilisateur
+            const userEmail = localStorage.getItem('omistock_user') || 'admin@test.com';
+            const nameParts = userEmail.split('@')[0].split(/[._]/);
+            
+            // Formatage du nom "sarah.admin" -> "Sarah Admin"
+            let fullName = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+            if (nameParts.length === 1) fullName += " Admin";
+            
+            const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+            
+            // Mise à jour de l'UI avec les données dynamiques
+            document.getElementById('user_email_sidebar').textContent = userEmail;
+            document.getElementById('user_avatar').textContent = initials[0];
+            
+            document.getElementById('profile_avatar').textContent = initials;
+            document.getElementById('profile_name').textContent = fullName;
+            document.getElementById('profile_email').textContent = userEmail;
+            document.getElementById('contact_email').textContent = userEmail;
+            
+            // Différenciation dynamique par entreprise (Multi-Tenant)
+            const isFood = userEmail.includes("food");
+            const companyName = isFood ? "Alimentation DZ" : "Santé Pro Algérie";
+            const locationStr = isFood ? "Constantine, Algérie" : "Alger & Oran, Algérie";
+            const companyEmail = isFood ? "contact@alimentation-dz.com" : "contact@sante-pro.dz";
+            
+            document.getElementById('company_name_sidebar').textContent = companyName.toUpperCase();
+            localStorage.setItem('omistock_company', companyName);
+            document.getElementById('contact_location').textContent = isFood ? "Constantine" : "Alger / Oran";
+            document.getElementById('input_company_name').value = companyName;
+            document.getElementById('input_company_address').value = isFood ? "Zone Industrielle Palma, Constantine" : "12 Rue Didouche Mourad, Alger / Avenue de l'ANP, Oran";
+            document.getElementById('input_company_email').value = companyEmail;
+            document.getElementById('input_company_nif').value = isFood ? "001234567890123" : "000416000987654";
+            document.getElementById('input_company_rc').value = isFood ? "25/00-7894561B21" : "16/00-0123456B20";
+        }
+
+        function saveSettings() {
+            const newName = document.getElementById('input_company_name').value;
+            localStorage.setItem('omistock_company', newName);
+            document.getElementById('company_name_sidebar').textContent = newName.toUpperCase();
+
+            const btn = document.querySelector('.btn-solid-blue');
+            const originalText = btn.textContent;
+            btn.textContent = "Sauvegarde en cours...";
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            
+            // Simulation d'un appel API
+            setTimeout(() => {
+                btn.textContent = "Modifications enregistrées !";
+                btn.classList.replace('bg-[#174092]', 'bg-emerald-600');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.replace('bg-emerald-600', 'bg-[#174092]');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75');
+                }, 2000);
+            }, 800);
+        }
+
+        function logout() {
+            localStorage.removeItem('omistock_token');
+            localStorage.removeItem('omistock_user');
+            window.location.href = 'index.html';
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

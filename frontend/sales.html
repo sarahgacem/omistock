@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMISTOCK - Commandes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .sidebar { background: #475569; } /* Slate-600 */
+        .sidebar .active { background: #4fd1c5; color: white; border-radius: 12px; } /* Teal-400 */
+        .sidebar .nav-item { color: #e2e8f0; transition: all 0.3s; padding: 12px 16px; border-radius: 12px; }
+        .sidebar .nav-item:hover:not(.active) { background: rgba(255,255,255,0.1); }
+        .card { background: white; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 flex flex-col p-6 text-white fixed h-full z-50">
+        <div class="mb-10 flex items-center gap-3 bg-white p-3 rounded-xl">
+            <div class="w-8 h-8 flex items-center justify-center">
+                <svg class="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+            <h2 class="text-sm font-bold text-slate-800 tracking-tight truncate" id="company_name_sidebar">OMISTOCK</h2>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <a href="dashboard.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <span class="font-medium text-sm">Dashboard</span>
+            </a>
+            <a href="inventory.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <span class="font-medium text-sm">Stock</span>
+            </a>
+            <a href="sales.html" class="nav-item active flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span class="font-medium text-sm">Commandes</span>
+            </a>
+            <a href="suppliers.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span class="font-medium text-sm">Fournisseurs</span>
+            </a>
+            <a href="reports.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="font-medium text-sm">Rapports</span>
+            </a>
+            <a href="logs.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="font-medium text-sm">Activity Logs</span>
+            </a>
+            <a href="settings.html" class="nav-item flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="font-medium text-sm">Paramètres</span>
+            </a>
+        </nav>
+        
+        <div class="mt-auto pt-4 border-t border-slate-500 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs" id="user_avatar">A</div>
+            <div class="flex-1 truncate">
+                <p class="text-xs font-semibold truncate" id="user_email">...</p>
+            </div>
+            <button onclick="logout()" class="text-slate-400 hover:text-white transition-colors" title="Déconnexion">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-10">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-semibold text-slate-800 mb-1">Historique des Commandes</h1>
+                <p class="text-slate-500 font-medium text-sm" id="total_sales">Chargement...</p>
+            </div>
+            <button class="bg-[#4fd1c5] hover:bg-teal-500 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-colors flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Nouvelle Vente
+            </button>
+        </header>
+
+        <!-- Table -->
+        <div class="card overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 text-sm font-semibold text-slate-700 bg-slate-50">
+                        <th class="py-4 px-6">ID Transaction</th>
+                        <th class="py-4 px-6">Date</th>
+                        <th class="py-4 px-6">Client</th>
+                        <th class="py-4 px-6">Filiale</th>
+                        <th class="py-4 px-6">Montant Total</th>
+                        <th class="py-4 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="sales_table" class="divide-y divide-slate-100">
+                    <tr><td colspan="6" class="py-8 text-center text-slate-500">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8000";
+
+        async function init() {
+            const token = localStorage.getItem('omistock_token');
+            if (!token) { window.location.href = 'index.html'; return; }
+            
+            const userEmail = localStorage.getItem('omistock_user') || 'Utilisateur';
+            const savedCompany = localStorage.getItem('omistock_company');
+            if (savedCompany) {
+                document.getElementById('company_name_sidebar').textContent = savedCompany.toUpperCase();
+            }
+
+            document.getElementById('user_email').textContent = userEmail;
+
+            try {
+                // We'll also need branches to resolve branch_id
+                const branchesRes = await fetch(`${API_BASE}/branches`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const branches = await branchesRes.json();
+                const branchMap = {};
+                branches.forEach(b => branchMap[b.id] = b.name);
+
+                const response = await fetch(`${API_BASE}/sales`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.status === 401 || response.status === 403) { logout(); return; }
+                
+                const sales = await response.json();
+                const salesCount = Array.isArray(sales) ? sales.length : 0;
+                document.getElementById('total_sales').textContent = `${salesCount} transactions enregistrées`;
+                renderTable(sales, branchMap);
+            } catch (error) {
+                console.error("Erreur de chargement:", error);
+            }
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' };
+            return new Date(dateString).toLocaleDateString('fr-FR', options);
+        }
+
+        function renderTable(sales, branchMap) {
+            const tbody = document.getElementById('sales_table');
+            tbody.innerHTML = '';
+            
+            if (sales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500 font-medium">Aucune vente trouvée.</td></tr>`;
+                return;
+            }
+
+            sales.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-6 text-sm font-semibold text-slate-800">#TR-${s.id.toString().padStart(4, '0')}</td>
+                    <td class="py-4 px-6 text-sm text-slate-500">${formatDate(s.date)}</td>
+                    <td class="py-4 px-6 text-sm font-medium text-slate-700">${s.customer_id ? 'Client #' + s.customer_id : 'Client Comptant'}</td>
+                    <td class="py-4 px-6 text-sm text-slate-600">${branchMap[s.branch_id] || 'N/A'}</td>
+                    <td class="py-4 px-6 text-sm font-bold text-teal-600">${s.total_amount} DA</td>
+                    <td class="py-4 px-6 text-right space-x-2">
+                        <button onclick="window.open('http://localhost:8000/sales/${s.id}/invoice/html', '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
+                            <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('omistock_token');
+            localStorage.removeItem('omistock_user');
+            window.location.href = 'index.html';
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
