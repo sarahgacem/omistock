@@ -62,9 +62,19 @@
         <p class="text-center text-xs text-slate-500 font-medium italic">
             Session sécurisée avec isolation de données via Company ID
         </p>
+
+        <div class="text-center mt-4">
+            <p class="text-slate-400 text-sm">Pas encore de compte ? <a href="signup.html" class="text-sky-400 font-bold hover:underline">Inscrivez votre entreprise</a></p>
+        </div>
     </div>
 
     <script>
+        const API_BASE = window.location.origin;
+
+        if (window.location.protocol === 'file:') {
+            alert("ATTENTION : Le mode démo nécessite de passer par le serveur.\nLancement via : http://localhost:8000/app/index.html");
+        }
+
         const form = document.getElementById('login-form');
         
         async function performLogin(email, password) {
@@ -73,7 +83,7 @@
             formData.append('password', password);
 
             try {
-                const res = await fetch('http://localhost:8000/token', {
+                const res = await fetch(`${API_BASE}/token`, {
                     method: 'POST',
                     body: formData
                 });

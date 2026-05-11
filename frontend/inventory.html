@@ -239,7 +239,7 @@
     </div>
 
     <script>
-        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8000";
+        const API_BASE = window.location.origin;
         let allProducts = [];
         let currentStockFilter = 'all';
 
@@ -253,6 +253,7 @@
             }
 
             document.getElementById('user_email').textContent = localStorage.getItem('omistock_user') || 'Utilisateur';
+            document.getElementById('inventory_table').innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-400">Chargement de l'inventaire...</td></tr>`;
             fetchProducts();
         }
 
@@ -267,6 +268,13 @@
 
             try {
                 const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('omistock_token');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
                 if(res.ok) {
                     allProducts = await res.json();
                     document.getElementById('product_count').textContent = `${allProducts.length} produits au total`;

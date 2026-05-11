@@ -1,5 +1,9 @@
-from .database import SessionLocal, engine
-from . import models, security
+import os, sys
+# Fix: Ajouter le dossier backend au path pour permettre les imports quand on lance depuis la racine
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from database import SessionLocal, engine
+import models, security
 from sqlalchemy.sql import func
 
 def init_db():
@@ -22,8 +26,8 @@ def init_db():
     db.commit()
 
     # 1. Création de l'Entreprise Mère
-    print("Création de SANTÉ PRO ALGERIE...")
-    company = models.Company(name="SANTÉ PRO ALGERIE")
+    print("Création de OMISTOCK BUSINESS SOLUTIONS...")
+    company = models.Company(name="OMISTOCK BUSINESS SOLUTIONS")
     db.add(company)
     db.commit()
     db.refresh(company)
@@ -169,9 +173,9 @@ def init_db():
     p7.quantity = inv7_alg.quantity + inv7_orn.quantity
     db.commit()
 
-    # --- 12. Création de la DEUXIÈME entreprise : ALIMENTATION DZ ---
-    print("Création de ALIMENTATION DZ...")
-    company2 = models.Company(name="ALIMENTATION DZ")
+    # --- 12. Création de la DEUXIÈME entreprise : AGRO-INDUSTRIE DZ ---
+    print("Création de AGRO-INDUSTRIE DZ...")
+    company2 = models.Company(name="AGRO-INDUSTRIE DZ")
     db.add(company2)
     db.commit()
     db.refresh(company2)

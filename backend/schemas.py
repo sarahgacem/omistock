@@ -183,6 +183,11 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class UserSignUp(BaseModel):
+    email: EmailStr
+    password: str
+    company_name: str
+
 class Token(BaseModel):
     access_token: str
     token_type: str

@@ -97,10 +97,10 @@
             document.getElementById('user_email').textContent = userEmail;
             document.getElementById('user_avatar').textContent = userEmail.substring(0, 1).toUpperCase();
             
-            if(userEmail.includes("food")) document.getElementById('company_name_sidebar').textContent = "ALIMENTATION DZ";
-            else document.getElementById('company_name_sidebar').textContent = "SANTÉ PRO ALGERIE";
+            if(userEmail.includes("agro")) document.getElementById('company_name_sidebar').textContent = "AGRO-INDUSTRIE DZ";
+            else document.getElementById('company_name_sidebar').textContent = "OMISTOCK BUSINESS SOLUTIONS";
 
-            const API_BASE = "http://" + (window.location.hostname || "localhost") + ":8000";
+            const API_BASE = "http://localhost:8000";
             try {
                 const response = await fetch(`${API_BASE}/api/suppliers`, {
                     headers: { 'Authorization': `Bearer ${token}` }

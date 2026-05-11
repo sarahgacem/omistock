@@ -75,10 +75,15 @@
                 <h1 class="text-3xl font-semibold text-slate-800 mb-1">Historique des Commandes</h1>
                 <p class="text-slate-500 font-medium text-sm" id="total_sales">Chargement...</p>
             </div>
-            <button class="bg-[#4fd1c5] hover:bg-teal-500 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-colors flex items-center gap-2">
+            <button disabled class="bg-slate-300 text-slate-500 cursor-not-allowed px-5 py-2.5 rounded-xl font-semibold shadow-sm flex items-center gap-2" title="Fonctionnalité réservée au scanner mobile">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Nouvelle Vente
+                Saisie Mobile Uniquement
             </button>
+            <!-- 
+                NOTE: La création de commande manuelle est désactivée sur le Web 
+                pour garantir l'intégrité des stocks via Scan Mobile (PWA) 
+                ou Réapprovisionnement Automatique.
+            -->
         </header>
 
         <!-- Table -->
@@ -102,7 +107,7 @@
     </main>
 
     <script>
-        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8000";
+        const API_BASE = "http://localhost:8000";
 
         async function init() {
             const token = localStorage.getItem('omistock_token');

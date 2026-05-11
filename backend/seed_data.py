@@ -1,6 +1,7 @@
 
 import os
 import sys
+from datetime import datetime, timedelta
 
 # Ajouter le chemin du backend pour l'import des modèles
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -16,8 +17,9 @@ def seed():
     db: Session = SessionLocal()
     
     try:
-        # Nettoyage
+        # 1. Nettoyage Complet
         print("Nettoyage des anciennes données...")
+        db.query(models.ActivityLog).delete()
         db.query(models.StockMovement).delete()
         db.query(models.SaleItem).delete()
         db.query(models.Sale).delete()
@@ -30,13 +32,15 @@ def seed():
         db.query(models.Company).delete()
         db.commit()
 
-        # 1. Entreprise
-        company = models.Company(name="SANTÉ PRO ALGERIE")
+        # 2. Création de l'Entreprise
+        print("Création de l'entreprise : OMISTOCK BUSINESS SOLUTIONS...")
+        company = models.Company(name="OMISTOCK BUSINESS SOLUTIONS")
         db.add(company)
         db.commit()
         db.refresh(company)
 
-        # 2. Filiales
+        # 3. Création des Filiales
+        print("Création des dépôts Alger et Oran...")
         b_alger = models.Branch(name="Dépôt Alger", city="Alger", company_id=company.id)
         b_oran = models.Branch(name="Dépôt Oran", city="Oran", company_id=company.id)
         db.add_all([b_alger, b_oran])
@@ -44,7 +48,7 @@ def seed():
         db.refresh(b_alger)
         db.refresh(b_oran)
 
-        # 3. Admin
+        # 4. Création de l'Administrateur
         admin = models.User(
             email="admin@test.com",
             hashed_password=security.get_password_hash("password123"),
@@ -53,23 +57,23 @@ def seed():
         )
         db.add(admin)
 
-        # 4. Fournisseurs
-        s1 = models.Supplier(name="Saidal Group", email="contact@saidal.dz", company_id=company.id)
-        s2 = models.Supplier(name="Biopharm", email="info@biopharm.com", company_id=company.id)
-        s3 = models.Supplier(name="Indusdz", email="sales@indusdz.dz", company_id=company.id)
-        db.add_all([s1, s2, s3])
+        # 5. Création des Fournisseurs (Saidal en priorité)
+        print("Ajout des fournisseurs (Saidal Group)...")
+        s_saidal = models.Supplier(name="Saidal Group", email="contact@saidal.dz", company_id=company.id)
+        s_biopharm = models.Supplier(name="Biopharm", email="info@biopharm.com", company_id=company.id)
+        db.add_all([s_saidal, s_biopharm])
         db.commit()
-        db.refresh(s1)
-        db.refresh(s2)
-        db.refresh(s3)
-
-            
-            # MATÉRIEL
-            {"name": "Stéthoscope Littmann", "sku": "MAT-STE-LIT", "price": 18000.0, "qty": 8, "min": 2, "cat": "Matériel", "sid": s2.id},
-            {"name": "Tensiomètre Bras", "sku": "MAT-TEN-BRA", "price": 6500.0, "qty": 3, "min": 5, "cat": "Matériel", "sid": s2.id},
-            {"name": "Oxymètre de pouls", "sku": "MAT-OXY-POU", "price": 2500.0, "qty": 50, "min": 15, "cat": "Matériel", "sid": s2.id},
-            {"name": "Thermomètre Infrarouge", "sku": "MAT-THE-INF", "price": 3500.0, "qty": 15, "min": 10, "cat": "Matériel", "sid": s1.id},
-            {"name": "Gants en Latex (Boîte)", "sku": "MAT-GAN-LAT", "price": 1200.0, "qty": 100, "min": 40, "cat": "Matériel", "sid": s1.id},
+        db.refresh(s_saidal)
+        # 6. Création des Produits Universels (IT, Santé, Agro)
+        print("Ajout du catalogue universel...")
+        products_data = [
+            {"name": "Ordinateur Portable HP Victus", "sku": "IT-HP-VCT", "price": 145000.0, "qty": 450, "min": 100, "sid": s_saidal.id},
+            {"name": "Serveur Dell PowerEdge", "sku": "IT-DEL-SRV", "price": 450000.0, "qty": 120, "min": 50, "sid": s_saidal.id},
+            {"name": "Doliprane 500mg (Boîte 16)", "sku": "PHA-DOL-500", "price": 250.0, "qty": 500, "min": 100, "sid": s_saidal.id},
+            {"name": "Huile de Tournesol 5L", "sku": "AGR-HUI-5L", "price": 1200.0, "qty": 300, "min": 50, "sid": s_biopharm.id},
+            {"name": "Café Robusta 250g", "sku": "AGR-CAF-250", "price": 450.0, "qty": 200, "min": 30, "sid": s_saidal.id},
+            {"name": "Smartphone Galaxy S21", "sku": "IT-GAL-S21", "price": 85000.0, "qty": 150, "min": 40, "sid": s_saidal.id},
+            {"name": "Écran Solaire SPF50", "sku": "COS-SUN-50", "price": 1800.0, "qty": 300, "min": 50, "sid": s_biopharm.id},
         ]
 
         products = []
@@ -85,31 +89,100 @@ def seed():
             )
             db.add(prod)
             products.append(prod)
-        
         db.commit()
+        for p in products: db.refresh(p)
 
-        # 6. Inventaire et Mouvements
-        print("Initialisation des stocks et mouvements...")
-        for prod in products:
-            # Répartir la quantité entre Alger et Oran
-            q_alg = int(prod.quantity * 0.7)
-            q_orn = prod.quantity - q_alg
+        # 7. Initialisation des Stocks et Inventaires
+        print("Répartition du stock entre Alger et Oran...")
+        for p in products:
+            # Répartition 70% Alger / 30% Oran
+            q_alg = int(p.quantity * 0.7)
+            q_orn = p.quantity - q_alg
             
-            inv_alg = models.Inventory(branch_id=b_alger.id, product_id=prod.id, quantity=q_alg, min_threshold=prod.min_threshold)
-            inv_orn = models.Inventory(branch_id=b_oran.id, product_id=prod.id, quantity=q_orn, min_threshold=prod.min_threshold)
+            inv_alg = models.Inventory(branch_id=b_alger.id, product_id=p.id, quantity=q_alg, min_threshold=p.min_threshold)
+            inv_orn = models.Inventory(branch_id=b_oran.id, product_id=p.id, quantity=q_orn, min_threshold=p.min_threshold)
             db.add_all([inv_alg, inv_orn])
             
-            # Mouvement initial
-            if prod.quantity > 0:
-                mov = models.StockMovement(
-                    product_id=prod.id,
-                    branch_id=b_alger.id,
-                    quantity=prod.quantity,
-                    reason="Stock Initial",
-                    movement_type="IN",
-                    company_id=company.id
-                )
-                db.add(mov)
+            # Mouvement initial (Entrée)
+            mov = models.StockMovement(
+                product_id=p.id,
+                branch_id=b_alger.id,
+                quantity=p.quantity,
+                reason="Réception Stock Initial",
+                movement_type="IN",
+                company_id=company.id,
+                created_at=datetime.now() - timedelta(days=2)
+            )
+            db.add(mov)
+
+        # 8. Transactions entre Alger et Oran (Transfert)
+        print("Simulation d'un transfert Alger -> Oran...")
+        # Transférer 50 Doliprane d'Alger vers Oran
+        doliprane = products[0]
+        transfer_qty = 50
+        
+        # Sortie d'Alger
+        mov_out = models.StockMovement(
+            product_id=doliprane.id,
+            branch_id=b_alger.id,
+            quantity=-transfer_qty,
+            reason="Transfert vers Oran",
+            movement_type="OUT",
+            company_id=company.id
+        )
+        # Entrée à Oran
+        mov_in = models.StockMovement(
+            product_id=doliprane.id,
+            branch_id=b_oran.id,
+            quantity=transfer_qty,
+            reason="Réception de Alger",
+            movement_type="IN",
+            company_id=company.id
+        )
+        db.add_all([mov_out, mov_in])
+
+        # 9. Statistiques de Performance (Ventes Saidal)
+        print("Simulation de ventes pour générer des statistiques...")
+        customer = models.Customer(name="Pharmacie El-Chifa", company_id=company.id)
+        db.add(customer)
+        db.commit()
+        db.refresh(customer)
+
+        # Ventes sur les 5 derniers jours pour le graphique
+        for i in range(5):
+            sale_date = datetime.now() - timedelta(days=i)
+            # Vente d'un produit Saidal (Doliprane ou Amoxicilline)
+            p_saidal = products[i % 2] 
+            sale = models.Sale(
+                customer_id=customer.id,
+                company_id=company.id,
+                branch_id=b_alger.id,
+                total_amount=p_saidal.price * 10,
+                date=sale_date
+            )
+            db.add(sale)
+            db.commit()
+            db.refresh(sale)
+            
+            item = models.SaleItem(
+                sale_id=sale.id,
+                product_id=p_saidal.id,
+                quantity=10,
+                unit_price=p_saidal.price
+            )
+            db.add(item)
+            
+            # Déduire du stock (Mouvement OUT)
+            mov_sale = models.StockMovement(
+                product_id=p_saidal.id,
+                branch_id=b_alger.id,
+                quantity=-10,
+                reason="Vente client",
+                movement_type="OUT",
+                company_id=company.id,
+                created_at=sale_date
+            )
+            db.add(mov_sale)
 
         db.commit()
         print("Seeding terminé avec succès !")

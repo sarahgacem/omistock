@@ -8,8 +8,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from jose import JWTError, jwt
-import os, pathlib
+import os, sys, pathlib
 from datetime import datetime, timedelta
+
+# Fix: Ajouter le dossier backend au path pour permettre les imports quand on lance depuis la racine
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import models, schemas, security, database
 from database import engine, get_db
@@ -31,24 +34,24 @@ def auto_seed_if_empty():
             print("[AUTO-SEED] Base incomplète. Initialisation des comptes démo...")
             
             # 0. Entreprises et Branches
-            c1 = db.query(models.Company).filter(models.Company.name == "SANTÉ PRO ALGERIE").first()
+            c1 = db.query(models.Company).filter(models.Company.name == "OMISTOCK BUSINESS SOLUTIONS").first()
             if not c1:
-                c1 = models.Company(name="SANTÉ PRO ALGERIE")
+                c1 = models.Company(name="OMISTOCK BUSINESS SOLUTIONS")
                 db.add(c1)
                 db.commit()
                 db.refresh(c1)
-                b1 = models.Branch(name="Dépôt Alger", city="Alger", company_id=c1.id)
-                b2 = models.Branch(name="Dépôt Oran", city="Oran", company_id=c1.id)
+                b1 = models.Branch(name="Dépôt Alger - Logistique", city="Alger", company_id=c1.id)
+                b2 = models.Branch(name="Dépôt Oran - Distribution", city="Oran", company_id=c1.id)
                 db.add_all([b1, b2])
                 db.commit()
             
-            c2 = db.query(models.Company).filter(models.Company.name == "ALIMENTATION DZ").first()
+            c2 = db.query(models.Company).filter(models.Company.name == "AGRO-INDUSTRIE DZ").first()
             if not c2:
-                c2 = models.Company(name="ALIMENTATION DZ")
+                c2 = models.Company(name="AGRO-INDUSTRIE DZ")
                 db.add(c2)
                 db.commit()
                 db.refresh(c2)
-                b3 = models.Branch(name="Dépôt Constantine", city="Constantine", company_id=c2.id)
+                b3 = models.Branch(name="Unité Constantine", city="Constantine", company_id=c2.id)
                 db.add(b3)
                 db.commit()
 
@@ -56,7 +59,7 @@ def auto_seed_if_empty():
             if user_count == 0:
                 h_pass = security.get_password_hash("password123")
                 u1 = models.User(email="admin@test.com", hashed_password=h_pass, company_id=c1.id)
-                u2 = models.User(email="food_admin@test.com", hashed_password=h_pass, company_id=c2.id)
+                u2 = models.User(email="agro_admin@test.com", hashed_password=h_pass, company_id=c2.id)
                 db.add_all([u1, u2])
                 db.commit()
                 print("OK: Utilisateurs admin créés.")
@@ -78,27 +81,45 @@ def auto_seed_if_empty():
                 db.commit()
                 print("OK: 5 fournisseurs ajoutés.")
 
-            # 2. Ajouter des produits universels et leur inventaire
+            # 2. Ajouter des produits universels (IT, Santé, Agro)
             if product_count == 0:
                 s1 = db.query(models.Supplier).first()
                 p_list = [
-                    models.Product(name="Ordinateur Portable HP", sku="ELEC-HP-15", price=85000.0, quantity=25, min_threshold=5, company_id=company.id, supplier_id=s1.id),
-                    models.Product(name="Doliprane 500mg", sku="PHA-DOL-500", price=250.0, quantity=500, min_threshold=100, company_id=company.id, supplier_id=s1.id),
-                    models.Product(name="Café Robusta 250g", sku="FOOD-CAF-250", price=450.0, quantity=200, min_threshold=50, company_id=company.id, supplier_id=s1.id),
-                    models.Product(name="Smartphone Galaxy", sku="ELEC-GAL-S21", price=65000.0, quantity=15, min_threshold=3, company_id=company.id, supplier_id=s1.id),
-                    models.Product(name="Huile de Tournesol 5L", sku="FOOD-HUI-5L", price=1200.0, quantity=150, min_threshold=30, company_id=company.id, supplier_id=s1.id)
+                    # IT / Tech
+                    models.Product(name="Ordinateur Portable HP Victus", sku="IT-HP-VCT", price=145000.0, quantity=25, min_threshold=5, company_id=company.id, supplier_id=s1.id),
+                    models.Product(name="Serveur Dell PowerEdge", sku="IT-DEL-SRV", price=450000.0, quantity=5, min_threshold=2, company_id=company.id, supplier_id=s1.id),
+                    
+                    # Santé / Pharma
+                    models.Product(name="Doliprane 500mg (Boîte 16)", sku="PHA-DOL-500", price=250.0, quantity=500, min_threshold=100, company_id=company.id, supplier_id=s1.id),
+                    models.Product(name="Lecteur Glycémie Accu-Chek", sku="MED-ACC-GLY", price=3500.0, quantity=50, min_threshold=10, company_id=company.id, supplier_id=s1.id),
+                    
+                    # Agro / Alimentation
+                    models.Product(name="Huile de Tournesol 5L", sku="AGR-HUI-5L", price=1200.0, quantity=150, min_threshold=30, company_id=company.id, supplier_id=s1.id),
+                    models.Product(name="Café Robusta 250g", sku="AGR-CAF-250", price=450.0, quantity=200, min_threshold=50, company_id=company.id, supplier_id=s1.id),
+                    
+                    # Cosmétique
+                    models.Product(name="Écran Solaire SPF50", sku="COS-SUN-50", price=1800.0, quantity=60, min_threshold=15, company_id=company.id, supplier_id=s1.id)
                 ]
                 db.add_all(p_list)
                 db.commit()
                 
-                # Créer l'inventaire pour chaque produit dans chaque branche
+                # Créer l'inventaire pour chaque produit dans chaque branche (Distribution Inégale pour la Démo)
                 branches = db.query(models.Branch).filter(models.Branch.company_id == company.id).all()
-                for p in p_list:
-                    for b in branches:
+                for i, p in enumerate(p_list):
+                    for j, b in enumerate(branches):
+                        # Distribution inégale : le premier dépôt (Alger) reçoit plus que le deuxième (Oran)
+                        # Pour certains produits, Oran recevra 0 pour montrer la rupture de stock
+                        qty = 0
+                        if j == 0: # Alger
+                            qty = p.quantity
+                        elif i % 2 == 0: # Oran reçoit seulement les produits pairs
+                            qty = p.quantity // 4
+                            p.quantity += qty # On ajuste le total global du produit
+                        
                         inv = models.Inventory(
                             product_id=p.id,
                             branch_id=b.id,
-                            quantity=p.quantity // len(branches) if len(branches) > 0 else p.quantity,
+                            quantity=qty,
                             min_threshold=p.min_threshold
                         )
                         db.add(inv)
@@ -144,6 +165,21 @@ auto_seed_if_empty()
 
 app = FastAPI(title="OMISTOCK - Système d'Inventaire")
 
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=404,
+        content={"message": "Ressource non trouvée. L'URL n'existe pas ou la ressource a été supprimée.", "path": request.url.path}
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Professional error handling logging can go here
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Une erreur inattendue s'est produite sur le serveur.", "details": str(exc)}
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -155,16 +191,23 @@ app.add_middleware(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Session expirée ou invalide. Veuillez vous reconnecter.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
         email: str = payload.get("sub")
         company_id: int = payload.get("company_id")
         if email is None or company_id is None:
-            return None
+            raise credentials_exception
         user = db.query(models.User).filter(models.User.email == email).first()
+        if user is None:
+            raise credentials_exception
         return user
-    except:
-        return None
+    except JWTError:
+        raise credentials_exception
 
 # Isolation Middleware
 class TenantIsolationMiddleware(BaseHTTPMiddleware):
@@ -195,12 +238,44 @@ app.add_middleware(TenantIsolationMiddleware)
 
 # --- ROUTES ---
 @app.post("/token", response_model=schemas.Token)
+@app.post("/api/token", response_model=schemas.Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if not user or not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Identifiants incorrects")
     access_token = security.create_access_token(data={"sub": user.email, "company_id": user.company_id})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/auth/signup")
+@app.post("/api/auth/signup")
+def signup(data: schemas.UserSignUp, db: Session = Depends(get_db)):
+    existing_user = db.query(models.User).filter(models.User.email == data.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé.")
+    
+    # 1. Créer l'entreprise
+    new_company = models.Company(name=data.company_name)
+    db.add(new_company)
+    db.commit()
+    db.refresh(new_company)
+    
+    # 2. Créer les branches par défaut
+    b1 = models.Branch(name="Dépôt Alger", city="Alger", company_id=new_company.id)
+    b2 = models.Branch(name="Dépôt Oran", city="Oran", company_id=new_company.id)
+    db.add_all([b1, b2])
+    
+    # 3. Créer l'utilisateur Admin
+    hashed_password = security.get_password_hash(data.password)
+    new_user = models.User(
+        email=data.email, 
+        hashed_password=hashed_password, 
+        company_id=new_company.id,
+        branch_id=b1.id 
+    )
+    db.add(new_user)
+    db.commit()
+    
+    return {"status": "success", "message": "Compte créé avec succès !"}
 
 @app.get("/products", response_model=List[schemas.ProductResponse])
 @app.get("/api/inventory", response_model=List[schemas.ProductResponse])
@@ -307,29 +382,49 @@ def get_alerts(current_user: Optional[models.User] = Depends(get_current_user), 
 
 @app.get("/dashboard/stats")
 @app.get("/api/stats")
-def get_dashboard_stats(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
+@app.get("/api/dashboard/stats")
+def get_dashboard_stats(branch_id: Optional[int] = None, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
-        cid = current_user.company_id if current_user else 1
-        products = db.query(models.Product).filter(models.Product.company_id == cid).all()
+        cid = current_user.company_id
         
-        if not products:
+        if branch_id:
+            # Stats filtrées par filiale
+            inventory_items = db.query(models.Inventory).join(models.Product).filter(
+                models.Inventory.branch_id == branch_id,
+                models.Product.company_id == cid
+            ).all()
+            
+            total_products = len(inventory_items)
+            total_qty = sum(item.quantity for item in inventory_items)
+            total_value = sum(item.quantity * item.product.price for item in inventory_items)
+            alerts = [i.product for i in inventory_items if i.quantity <= i.product.min_threshold]
+            
+            # On injecte la quantité de la filiale dans l'objet produit pour l'affichage uniforme
+            for i in inventory_items:
+                i.product.quantity = i.quantity 
+            products = [i.product for i in inventory_items]
+        else:
+            # Stats globales entreprise
+            products = db.query(models.Product).filter(models.Product.company_id == cid).all()
+            total_products = len(products)
+            total_qty = sum((p.quantity or 0) for p in products)
+            total_value = sum((p.price or 0) * (p.quantity or 0) for p in products)
+            alerts = [p for p in products if (p.quantity or 0) <= (p.min_threshold or 0)]
+        
+        if not products and not branch_id:
             return {
                 "summary": {"total_products": 0, "alerts_count": 0, "total_value": 0, "total_qty": 0},
                 "alerts": [], "top_5": [], "top_sold": [], "movements": [], "trend": []
             }
 
-        total_products = len(products)
-        alerts = [p for p in products if (p.quantity or 0) <= (p.min_threshold or 0)]
-        total_qty = sum((p.quantity or 0) for p in products)
-        total_value = sum((p.price or 0) * (p.quantity or 0) for p in products)
-
         # Real trends from StockMovements
         today = datetime.now().date()
         start_date = today - timedelta(days=6)
         
-        movements_db = db.query(models.StockMovement).filter(
-            models.StockMovement.company_id == cid
-        ).all()
+        movements_query = db.query(models.StockMovement).filter(models.StockMovement.company_id == cid)
+        if branch_id:
+            movements_query = movements_query.filter(models.StockMovement.branch_id == branch_id)
+        movements_db = movements_query.all()
 
         # Aggregate by day for IN and OUT
         trend_dict = { (start_date + timedelta(days=i)).strftime("%A"): {"in": 0, "out": 0} for i in range(7) }
@@ -347,7 +442,37 @@ def get_dashboard_stats(current_user: Optional[models.User] = Depends(get_curren
         trend = [{"day": day, "in": data["in"], "out": data["out"]} for day, data in trend_dict.items()]
 
         # Top 5
-        top_5 = sorted(products, key=lambda x: x.quantity, reverse=True)[:5]
+        top_5 = sorted(products, key=lambda x: (x.quantity or 0), reverse=True)[:5]
+
+        # Top Sold
+        top_sold_query = db.query(
+            models.Product.name, 
+            func.sum(models.SaleItem.quantity).label('total_sold')
+        ).join(models.SaleItem).join(models.Sale).filter(
+            models.Sale.company_id == cid
+        )
+        if branch_id:
+            top_sold_query = top_sold_query.filter(models.Sale.branch_id == branch_id)
+        
+        top_sold_db = top_sold_query.group_by(models.Product.id).order_by(func.sum(models.SaleItem.quantity).desc()).limit(5).all()
+        top_sold = [{"name": row.name, "total_sold": int(row.total_sold)} for row in top_sold_db]
+
+        # Recent Movements
+        movements_recent_query = db.query(models.StockMovement).filter(models.StockMovement.company_id == cid)
+        if branch_id:
+            movements_recent_query = movements_recent_query.filter(models.StockMovement.branch_id == branch_id)
+        movements_recent = movements_recent_query.order_by(models.StockMovement.created_at.desc()).limit(10).all()
+        
+        movements_list = []
+        for m in movements_recent:
+            p = db.query(models.Product).filter(models.Product.id == m.product_id).first()
+            movements_list.append({
+                "id": m.id,
+                "product_name": p.name if p else "Produit inconnu",
+                "quantity": m.quantity,
+                "reason": m.reason,
+                "date": m.created_at.strftime("%d/%m %H:%M") if m.created_at else "--"
+            })
         
         return {
             "summary": {
@@ -356,14 +481,16 @@ def get_dashboard_stats(current_user: Optional[models.User] = Depends(get_curren
                 "total_value": total_value,
                 "total_qty": total_qty
             },
-            "alerts": [{"id": p.id, "name": p.name, "quantity": p.quantity} for p in alerts],
+            "alerts": [{"id": p.id, "name": p.name, "quantity": p.quantity, "supplier": (p.supplier.name if p.supplier else "N/A")} for p in alerts],
             "top_5": [{"name": p.name, "quantity": p.quantity} for p in top_5],
-            "top_sold": [],
-            "movements": [],
+            "top_sold": top_sold,
+            "movements": movements_list,
             "trend": trend
         }
     except Exception as e:
+        import traceback
         print(f"Erreur Stats: {e}")
+        traceback.print_exc()
         return {
             "summary": {"total_products": 0, "alerts_count": 0, "total_value": 0, "total_qty": 0},
             "alerts": [], "top_5": [], "top_sold": [], "movements": [], "trend": []
