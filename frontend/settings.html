@@ -312,6 +312,30 @@
                     </div>
                 </div>
 
+                <!-- Maintenance & Sauvegarde -->
+                <div class="card p-6 border-2 border-slate-100">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h2 class="text-lg font-bold text-slate-800">Maintenance & Sauvegarde</h2>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-6">Gérez l'intégrité de vos données et effectuez des copies de sécurité régulières.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="text-sm font-bold text-slate-700 mb-2">Sauvegarde complète</h3>
+                            <p class="text-xs text-slate-500 mb-4">Télécharge une copie complète de la base de données actuelle (.db).</p>
+                            <button onclick="backupDatabase()" class="w-full btn-solid-blue flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Sauvegarder la Base
+                            </button>
+                        </div>
+                        <div class="p-4 bg-rose-50 rounded-xl border border-rose-100">
+                            <h3 class="text-sm font-bold text-rose-800 mb-2">Nettoyage critique</h3>
+                            <p class="text-xs text-rose-500 mb-4">Supprime tous les logs et mouvements de stock (Action irréversible).</p>
+                            <button onclick="cleanDatabase()" class="w-full btn-outline-red text-sm">Vider les Tables</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -447,6 +471,72 @@
                 btn.textContent = "Générer une clé";
                 btn.disabled = false;
             }
+        }
+
+        async function backupDatabase() {
+            const token = localStorage.getItem('omistock_token');
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = "...";
+
+            try {
+                const response = await fetch('/api/admin/backup', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const blob = await response.json(); // Wait, FileResponse is a file stream
+                    // Re-doing fetch to handle blob properly
+                }
+                
+                // Better way to download file in JS:
+                window.location.href = `/api/admin/backup?token=${token}`; 
+                // Wait, our route expects Depends(get_current_user) which looks at Authorization header.
+                // We'll use a fetch + blob approach.
+                
+                const resp = await fetch('/api/admin/backup', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_omistock_${new Date().toISOString().split('T')[0]}.db`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                btn.classList.replace('btn-solid-blue', 'bg-emerald-600');
+                btn.innerHTML = "Sauvegarde OK !";
+                setTimeout(() => {
+                    btn.classList.replace('bg-emerald-600', 'btn-solid-blue');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }, 2000);
+            } catch (e) {
+                alert("Erreur lors de la sauvegarde");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        async function cleanDatabase() {
+            if (!confirm("ATTENTION : Cette action va supprimer toutes les données de transaction (ventes, logs, mouvements). Continuer ?")) return;
+            
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch('/api/admin/clean', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    alert("Base de données nettoyée avec succès.");
+                } else {
+                    alert("Erreur lors du nettoyage.");
+                }
+            } catch (e) { alert("Erreur réseau"); }
         }
 
         window.onload = () => {

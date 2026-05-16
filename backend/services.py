@@ -5,6 +5,18 @@ from typing import Optional, Dict, Any
 
 import models
 import schemas
+from sqlalchemy.orm import Session
+
+def log_audit(db: Session, user_id: int, action: str, old_val: str, new_val: str, company_id: int):
+    log = models.AuditLog(
+        user_id=user_id,
+        action=action,
+        old_value=old_val,
+        new_value=new_val,
+        company_id=company_id
+    )
+    db.add(log)
+    db.commit()
 
 def get_dashboard_stats_data(db: Session, cid: int, branch_id: Optional[int] = None) -> Dict[str, Any]:
     if branch_id:

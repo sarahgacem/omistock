@@ -2,6 +2,10 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import jwt
 from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer
+
+# Outil pour récupérer le token dans les requêtes
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 # Configuration de base (À mettre dans un fichier .env plus tard pour plus de sécurité)
 SECRET_KEY = "SUPER_SECRET_POUR_OMISTOCK_2026"

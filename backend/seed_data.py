@@ -48,14 +48,45 @@ def seed():
         db.refresh(b_alger)
         db.refresh(b_oran)
 
-        # 4. Création de l'Administrateur
+        # 4. Création des Administrateurs
+        print("Création des comptes administrateurs (Alger, Oran, Constantine)...")
         admin = models.User(
             email="admin@test.com",
             hashed_password=security.get_password_hash("password123"),
             company_id=company.id,
-            branch_id=b_alger.id
+            branch_id=b_alger.id,
+            user_type="ADMIN"
         )
-        db.add(admin)
+        oran_admin = models.User(
+            email="oran@test.com",
+            hashed_password=security.get_password_hash("password123"),
+            company_id=company.id,
+            branch_id=b_oran.id,
+            user_type="ADMIN"
+        )
+        db.add_all([admin, oran_admin])
+        
+        # Deuxième entreprise
+        print("Création de l'entreprise AGRO-INDUSTRIE DZ...")
+        company2 = models.Company(name="AGRO-INDUSTRIE DZ")
+        db.add(company2)
+        db.commit()
+        db.refresh(company2)
+        
+        b_const = models.Branch(name="Dépôt Constantine", city="Constantine", company_id=company2.id)
+        db.add(b_const)
+        db.commit()
+        db.refresh(b_const)
+        
+        food_admin = models.User(
+            email="food_admin@test.com",
+            hashed_password=security.get_password_hash("password123"),
+            company_id=company2.id,
+            branch_id=b_const.id,
+            user_type="ADMIN"
+        )
+        db.add(food_admin)
+        db.commit()
 
         # 5. Création des Fournisseurs (Saidal en priorité)
         print("Ajout des fournisseurs (Saidal Group)...")
