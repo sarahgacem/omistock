@@ -293,6 +293,25 @@
                     </div>
                 </div>
 
+                <!-- Accès Agent (API Keys) -->
+                <div class="card p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-[#174092]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                        <h2 class="text-lg font-bold text-slate-800">Accès Agent (API Keys)</h2>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-4">Générez des clés API pour permettre à vos agents IA d'accéder au système OMISTOCK de manière sécurisée.</p>
+                    
+                    <div class="flex gap-2 mb-6">
+                        <input type="text" id="agent_name_input" class="input-field flex-1" placeholder="Nom de l'agent (ex: Agent Inventaire)">
+                        <button onclick="generateAgentKey()" class="btn-solid-blue whitespace-nowrap" id="btn_generate_key">Générer une clé</button>
+                    </div>
+
+                    <div id="agents_list" class="space-y-3">
+                        <!-- Liste des agents -->
+                        <p class="text-sm text-slate-400 italic">Chargement des agents...</p>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -368,7 +387,72 @@
             window.location.href = 'index.html';
         }
 
-        window.onload = init;
+        async function loadAgents() {
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch('/api/agents', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const agents = await response.json();
+                    const list = document.getElementById('agents_list');
+                    if (agents.length === 0) {
+                        list.innerHTML = '<p class="text-sm text-slate-400 italic">Aucun agent configuré pour le moment.</p>';
+                        return;
+                    }
+                    list.innerHTML = agents.map(a => `
+                        <div class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">${a.email}</p>
+                                <p class="text-xs text-slate-500 font-mono mt-1 blur-sm hover:blur-none transition-all cursor-pointer select-all">${a.api_key}</p>
+                            </div>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">AGENT</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Erreur de chargement des agents", e);
+            }
+        }
+
+        async function generateAgentKey() {
+            const token = localStorage.getItem('omistock_token');
+            const nameInput = document.getElementById('agent_name_input');
+            const btn = document.getElementById('btn_generate_key');
+            const name = nameInput.value.trim() || 'Agent IA';
+            
+            btn.textContent = "...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/agents', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+
+                if (response.ok) {
+                    nameInput.value = '';
+                    await loadAgents();
+                } else {
+                    const err = await response.json();
+                    alert("Erreur: " + err.detail);
+                }
+            } catch (e) {
+                alert("Erreur réseau");
+            } finally {
+                btn.textContent = "Générer une clé";
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = () => {
+            init();
+            loadAgents();
+        };
     </script>
 </body>
 </html>

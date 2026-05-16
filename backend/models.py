@@ -35,7 +35,9 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    hashed_password = Column(String, nullable=True)
+    user_type = Column(String, default="HUMAIN") # 'HUMAIN' ou 'AGENT'
+    api_key = Column(String, unique=True, nullable=True)
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), index=True)
     
@@ -189,4 +191,45 @@ class ActivityLog(Base):
     
     user = relationship("User")
     company = relationship("Company")
+
+class AuditLog(Base):
+    """Traçabilité des modifications de stock et ventes"""
+    __tablename__ = "audit_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    action = Column(String)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    old_value = Column(String, nullable=True)
+    new_value = Column(String, nullable=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True)
+    
+    user = relationship("User")
+    company = relationship("Company")
+
+class TransferStatus(str, enum.Enum):
+    PENDING = "en_attente"
+    APPROVED = "approuvé"
+    CONFIRMED = "confirmé"
+    REJECTED = "rejeté"
+
+class TransferRequest(Base):
+    """Demandes de transfert de stock entre dépôts"""
+    __tablename__ = "transfer_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
+    from_branch_id = Column(Integer, ForeignKey("branches.id"))
+    to_branch_id = Column(Integer, ForeignKey("branches.id"))
+    quantity = Column(Integer)
+    status = Column(String, default=TransferStatus.PENDING)
+    requester_id = Column(Integer, ForeignKey("users.id"))
+    approver_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True)
+
+    product = relationship("Product")
+    from_branch = relationship("Branch", foreign_keys=[from_branch_id])
+    to_branch = relationship("Branch", foreign_keys=[to_branch_id])
+    requester = relationship("User", foreign_keys=[requester_id])
+    approver = relationship("User", foreign_keys=[approver_id])
 

@@ -57,9 +57,15 @@
 
     <!-- Main Content -->
     <main class="flex-1 ml-72 p-12">
-        <header class="mb-12">
-            <h1 class="text-5xl font-black text-slate-900 mb-3">Historique des Transactions</h1>
-            <p class="text-slate-500 font-medium text-lg">Journal complet des mouvements de stock et flux logistiques.</p>
+        <header class="mb-12 flex justify-between items-end">
+            <div>
+                <h1 class="text-5xl font-black text-slate-900 mb-3">Traçabilité & Audit</h1>
+                <p class="text-slate-500 font-medium text-lg">Journal détaillé des actions effectuées par les humains et les agents IA.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="filterLogs('ALL')" id="filter_all" class="px-6 py-2 rounded-full font-bold text-sm bg-slate-900 text-white shadow-lg transition-all">Tous</button>
+                <button onclick="filterLogs('AGENT')" id="filter_agent" class="px-6 py-2 rounded-full font-bold text-sm bg-white text-slate-600 border border-slate-200 hover:border-emerald-400 transition-all">Agents IA</button>
+            </div>
         </header>
 
         <div class="card p-8">
@@ -68,15 +74,15 @@
                     <thead>
                         <tr class="border-b border-slate-100">
                             <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Date</th>
-                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Produit ID</th>
-                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Quantité</th>
-                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Type</th>
-                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Raison</th>
+                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Utilisateur / Agent</th>
+                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Action</th>
+                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Ancien</th>
+                            <th class="py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-widest">Nouveau</th>
                         </tr>
                     </thead>
                     <tbody id="logs_table" class="divide-y divide-slate-50">
                         <tr>
-                            <td colspan="3" class="py-8 text-center text-slate-500">Chargement des logs...</td>
+                            <td colspan="5" class="py-8 text-center text-slate-500">Chargement des données d'audit...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -85,6 +91,8 @@
     </main>
 
     <script>
+        let allLogs = [];
+
         async function getAuthToken() {
             const token = localStorage.getItem('omistock_token');
             if (!token) {
@@ -101,14 +109,31 @@
         }
 
         function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit', second:'2-digit' };
+            const options = { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' };
             return new Date(dateString).toLocaleDateString('fr-FR', options);
         }
 
-        function getMovementBadge(type) {
-            if (type === "IN") return `<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">ENTRÉE</span>`;
-            if (type === "OUT") return `<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold">SORTIE</span>`;
-            return `<span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-bold">${type}</span>`;
+        function getUserBadge(type, email) {
+            if (type === "AGENT") {
+                return `
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        <div>
+                            <p class="text-sm font-bold text-slate-900">Agent IA</p>
+                            <p class="text-[10px] text-blue-500 font-mono">${email}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            return `
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                    <div>
+                        <p class="text-sm font-bold text-slate-900">Humain</p>
+                        <p class="text-[10px] text-slate-400 font-mono">${email}</p>
+                    </div>
+                </div>
+            `;
         }
 
         async function loadLogs() {
@@ -116,9 +141,9 @@
             const token = await getAuthToken();
             if (!token) return;
 
-            const API_BASE = "http://localhost:8000";
+            const API_BASE = window.location.origin;
             try {
-                const response = await fetch(`${API_BASE}/api/movements`, {
+                const response = await fetch(`${API_BASE}/api/audit_logs`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -127,31 +152,50 @@
                     return;
                 }
 
-                const movements = await response.json();
-                const tbody = document.getElementById('logs_table');
-                tbody.innerHTML = '';
-
-                if (movements.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500 font-medium">Aucun mouvement trouvé.</td></tr>`;
-                    return;
-                }
-
-                movements.forEach(m => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 transition-colors group";
-                    tr.innerHTML = `
-                        <td class="py-4 px-6 text-sm text-slate-500 whitespace-nowrap">${formatDate(m.created_at)}</td>
-                        <td class="py-4 px-6 text-sm font-bold text-slate-700">Produit #${m.product_id}</td>
-                        <td class="py-4 px-6 text-sm font-black ${m.quantity > 0 ? 'text-emerald-600' : 'text-rose-600'}">${m.quantity > 0 ? '+' : ''}${m.quantity}</td>
-                        <td class="py-4 px-6">${getMovementBadge(m.movement_type)}</td>
-                        <td class="py-4 px-6 text-sm font-medium text-slate-600">${m.reason}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                allLogs = await response.json();
+                renderLogs(allLogs);
 
             } catch (error) {
                 console.error("Erreur de chargement:", error);
-                document.getElementById('logs_table').innerHTML = `<tr><td colspan="3" class="py-8 text-center text-rose-500 font-bold">Erreur de connexion au serveur</td></tr>`;
+                document.getElementById('logs_table').innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Erreur de connexion au serveur</td></tr>`;
+            }
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logs_table');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500 font-medium">Aucun log d'audit trouvé.</td></tr>`;
+                return;
+            }
+
+            logs.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors group";
+                tr.innerHTML = `
+                    <td class="py-4 px-6 text-sm text-slate-400 whitespace-nowrap font-medium">${formatDate(m.timestamp)}</td>
+                    <td class="py-4 px-6">${getUserBadge(m.user_type, m.user_email)}</td>
+                    <td class="py-4 px-6 text-xs font-black text-slate-700 uppercase tracking-tighter">${m.action.replace(/_/g, ' ')}</td>
+                    <td class="py-4 px-6 text-xs font-bold text-slate-400 line-through">${m.old_value || '--'}</td>
+                    <td class="py-4 px-6 text-sm font-black text-emerald-600">${m.new_value || '--'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterLogs(type) {
+            const btnAll = document.getElementById('filter_all');
+            const btnAgent = document.getElementById('filter_agent');
+
+            if (type === 'AGENT') {
+                btnAgent.className = "px-6 py-2 rounded-full font-bold text-sm bg-blue-600 text-white shadow-lg transition-all";
+                btnAll.className = "px-6 py-2 rounded-full font-bold text-sm bg-white text-slate-600 border border-slate-200 transition-all";
+                renderLogs(allLogs.filter(l => l.user_type === 'AGENT'));
+            } else {
+                btnAll.className = "px-6 py-2 rounded-full font-bold text-sm bg-slate-900 text-white shadow-lg transition-all";
+                btnAgent.className = "px-6 py-2 rounded-full font-bold text-sm bg-white text-slate-600 border border-slate-200 transition-all";
+                renderLogs(allLogs);
             }
         }
 

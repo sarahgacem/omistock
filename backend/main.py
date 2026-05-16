@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Header
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -13,8 +13,9 @@ from datetime import datetime, timedelta
 
 # Fix: Ajouter le dossier backend au path pour permettre les imports quand on lance depuis la racine
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import secrets
 
-import models, schemas, security, database
+import models, schemas, security, database, services
 from database import engine, get_db
 
 # Initialisation
@@ -58,11 +59,12 @@ def auto_seed_if_empty():
             # 0.1 Utilisateurs
             if user_count == 0:
                 h_pass = security.get_password_hash("password123")
-                u1 = models.User(email="admin@test.com", hashed_password=h_pass, company_id=c1.id)
-                u2 = models.User(email="agro_admin@test.com", hashed_password=h_pass, company_id=c2.id)
-                db.add_all([u1, u2])
+                u1 = models.User(email="admin@test.com", hashed_password=h_pass, company_id=c1.id, branch_id=b1.id, user_type="ADMIN")
+                u2 = models.User(email="oran@test.com", hashed_password=h_pass, company_id=c1.id, branch_id=b2.id, user_type="ADMIN")
+                u3 = models.User(email="agro_admin@test.com", hashed_password=h_pass, company_id=c2.id, branch_id=b3.id, user_type="ADMIN")
+                db.add_all([u1, u2, u3])
                 db.commit()
-                print("OK: Utilisateurs admin créés.")
+                print("OK: Utilisateurs admin (Alger, Oran, Constantine) créés.")
             
             # Utiliser c1 par défaut pour le reste du seeding
             company = c1
@@ -188,14 +190,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def log_audit(db: Session, user_id: int, action: str, old_val: str, new_val: str, company_id: int):
+    log = models.AuditLog(
+        user_id=user_id,
+        action=action,
+        old_value=old_val,
+        new_value=new_val,
+        company_id=company_id
+    )
+    db.add(log)
+    db.commit()
+
+def get_current_user(token: Optional[str] = Depends(oauth2_scheme), x_api_key: Optional[str] = Header(None), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Session expirée ou invalide. Veuillez vous reconnecter.",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if x_api_key:
+        user = db.query(models.User).filter(models.User.api_key == x_api_key).first()
+        if user:
+            return user
+        raise credentials_exception
+
+    if not token:
+        raise credentials_exception
+
     try:
         payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
         email: str = payload.get("sub")
@@ -237,45 +259,32 @@ class TenantIsolationMiddleware(BaseHTTPMiddleware):
 app.add_middleware(TenantIsolationMiddleware)
 
 # --- ROUTES ---
-@app.post("/token", response_model=schemas.Token)
-@app.post("/api/token", response_model=schemas.Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not user or not security.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Identifiants incorrects")
-    access_token = security.create_access_token(data={"sub": user.email, "company_id": user.company_id})
-    return {"access_token": access_token, "token_type": "bearer"}
+@app.get("/api/me")
+def get_me(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    branch_name = current_user.branch.name if current_user.branch else "N/A"
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "branch_id": current_user.branch_id,
+        "branch_name": branch_name,
+        "company_id": current_user.company_id,
+        "user_type": current_user.user_type
+    }
 
-@app.post("/auth/signup")
-@app.post("/api/auth/signup")
+@app.post("/token", response_model=schemas.Token)
+@app.post("/api/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    try:
+        return services.authenticate_user(db, form_data)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e), headers={"WWW-Authenticate": "Bearer"})
+
+@app.post("/api/signup")
 def signup(data: schemas.UserSignUp, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == data.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé.")
-    
-    # 1. Créer l'entreprise
-    new_company = models.Company(name=data.company_name)
-    db.add(new_company)
-    db.commit()
-    db.refresh(new_company)
-    
-    # 2. Créer les branches par défaut
-    b1 = models.Branch(name="Dépôt Alger", city="Alger", company_id=new_company.id)
-    b2 = models.Branch(name="Dépôt Oran", city="Oran", company_id=new_company.id)
-    db.add_all([b1, b2])
-    
-    # 3. Créer l'utilisateur Admin
-    hashed_password = security.get_password_hash(data.password)
-    new_user = models.User(
-        email=data.email, 
-        hashed_password=hashed_password, 
-        company_id=new_company.id,
-        branch_id=b1.id 
-    )
-    db.add(new_user)
-    db.commit()
-    
-    return {"status": "success", "message": "Compte créé avec succès !"}
+    try:
+        return services.create_user_service(db, data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/products", response_model=List[schemas.ProductResponse])
 @app.get("/api/inventory", response_model=List[schemas.ProductResponse])
@@ -331,42 +340,92 @@ def delete_product(product_id: int, current_user: models.User = Depends(get_curr
     db.commit()
     return {"status": "deleted"}
 
-@app.post("/api/transfer")
-def transfer_stock(data: schemas.TransferCreate, current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
-    cid = current_user.company_id if current_user else 1
+@app.get("/api/transfer/requests", response_model=List[schemas.TransferRequestResponse])
+def get_transfer_requests(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(models.TransferRequest).filter(models.TransferRequest.company_id == current_user.company_id).order_by(models.TransferRequest.created_at.desc()).all()
+
+@app.post("/api/transfer/request")
+def request_transfer(data: schemas.TransferRequestCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    cid = current_user.company_id
+    req = models.TransferRequest(
+        product_id=data.product_id,
+        from_branch_id=data.from_branch_id,
+        to_branch_id=data.to_branch_id,
+        quantity=data.quantity,
+        requester_id=current_user.id,
+        company_id=cid
+    )
+    db.add(req)
+    db.commit()
+    db.refresh(req)
+    log_audit(db, current_user.id, f"TRANSFER_REQUESTED_{req.id}", "N/A", f"Qty:{req.quantity}", current_user.company_id)
+    return {"status": "success", "message": "Demande de transfert envoyée"}
+
+@app.post("/api/transfer/{req_id}/approve")
+def approve_transfer(req_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    req = db.query(models.TransferRequest).filter(models.TransferRequest.id == req_id, models.TransferRequest.company_id == current_user.company_id).first()
+    if not req: raise HTTPException(status_code=404)
+    if req.status != models.TransferStatus.PENDING: raise HTTPException(status_code=400, detail="Statut invalide")
     
-    # Récupérer l'inventaire des deux dépôts
-    from_inv = db.query(models.Inventory).filter(models.Inventory.product_id == data.product_id, models.Inventory.branch_id == data.from_branch_id).first()
-    to_inv = db.query(models.Inventory).filter(models.Inventory.product_id == data.product_id, models.Inventory.branch_id == data.to_branch_id).first()
-    
-    if from_inv:
-        if from_inv.quantity < data.quantity:
-            raise HTTPException(status_code=400, detail="Stock insuffisant dans le dépôt source")
-        from_inv.quantity -= data.quantity
-    
-    if to_inv:
-        to_inv.quantity += data.quantity
-    else:
-        # Créer l'entrée si elle n'existe pas dans le dépôt de destination
-        to_inv = models.Inventory(product_id=data.product_id, branch_id=data.to_branch_id, quantity=data.quantity, min_threshold=5)
-        db.add(to_inv)
+    from_inv = db.query(models.Inventory).filter(models.Inventory.product_id == req.product_id, models.Inventory.branch_id == req.from_branch_id).first()
+    if not from_inv or from_inv.quantity < req.quantity:
+        raise HTTPException(status_code=400, detail="Stock insuffisant dans le dépôt source")
         
-    # Historiser le mouvement pour le dashboard
+    old_from = from_inv.quantity
+    from_inv.quantity -= req.quantity
+    
+    req.status = models.TransferStatus.APPROVED
+    req.approver_id = current_user.id
+    
     movement = models.StockMovement(
-        product_id=data.product_id, 
-        branch_id=data.from_branch_id, 
-        quantity=-data.quantity, 
-        reason="Transfert vers dépôt", 
-        company_id=cid, 
+        product_id=req.product_id, 
+        branch_id=req.from_branch_id, 
+        quantity=-req.quantity, 
+        reason="Transfert approuvé (sortie)", 
+        company_id=current_user.company_id, 
         movement_type="OUT"
     )
     db.add(movement)
-    
     db.commit()
-    return {"status": "success", "message": "Transfert réussi"}
+    
+    log_audit(db, current_user.id, f"TRANSFER_APPROVED_{req_id}", f"Source:{old_from}->{from_inv.quantity}", "En transit", current_user.company_id)
+    
+    return {"status": "success", "message": "Transfert approuvé, en attente de confirmation"}
 
-@app.get("/products/{product_id}")
-@app.get("/api/products/{product_id}")
+@app.post("/api/transfer/{req_id}/confirm")
+def confirm_transfer(req_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    req = db.query(models.TransferRequest).filter(models.TransferRequest.id == req_id, models.TransferRequest.company_id == current_user.company_id).first()
+    if not req: raise HTTPException(status_code=404)
+    if req.status != models.TransferStatus.APPROVED: raise HTTPException(status_code=400, detail="Statut invalide")
+    
+    to_inv = db.query(models.Inventory).filter(models.Inventory.product_id == req.product_id, models.Inventory.branch_id == req.to_branch_id).first()
+    old_to = to_inv.quantity if to_inv else 0
+
+    if to_inv:
+        to_inv.quantity += req.quantity
+    else:
+        to_inv = models.Inventory(product_id=req.product_id, branch_id=req.to_branch_id, quantity=req.quantity, min_threshold=5)
+        db.add(to_inv)
+        
+    req.status = models.TransferStatus.CONFIRMED
+    
+    movement = models.StockMovement(
+        product_id=req.product_id, 
+        branch_id=req.to_branch_id, 
+        quantity=req.quantity, 
+        reason="Transfert confirmé (entrée)", 
+        company_id=current_user.company_id, 
+        movement_type="IN"
+    )
+    db.add(movement)
+    db.commit()
+    
+    log_audit(db, current_user.id, f"TRANSFER_CONFIRMED_{req_id}", "En transit", f"Dest:{old_to}->{to_inv.quantity}", current_user.company_id)
+    
+    return {"status": "success", "message": "Transfert confirmé et stock mis à jour"}
+
+@app.get("/products/{product_id}", response_model=schemas.ProductResponse)
+@app.get("/api/products/{product_id}", response_model=schemas.ProductResponse)
 def get_product(product_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_product = db.query(models.Product).filter(models.Product.id == product_id, models.Product.company_id == current_user.company_id).first()
     if not db_product: raise HTTPException(status_code=404)
@@ -385,108 +444,7 @@ def get_alerts(current_user: Optional[models.User] = Depends(get_current_user), 
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats(branch_id: Optional[int] = None, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
-        cid = current_user.company_id
-        
-        if branch_id:
-            # Stats filtrées par filiale
-            inventory_items = db.query(models.Inventory).join(models.Product).filter(
-                models.Inventory.branch_id == branch_id,
-                models.Product.company_id == cid
-            ).all()
-            
-            total_products = len(inventory_items)
-            total_qty = sum(item.quantity for item in inventory_items)
-            total_value = sum(item.quantity * item.product.price for item in inventory_items)
-            alerts = [i.product for i in inventory_items if i.quantity <= i.product.min_threshold]
-            
-            # On injecte la quantité de la filiale dans l'objet produit pour l'affichage uniforme
-            for i in inventory_items:
-                i.product.quantity = i.quantity 
-            products = [i.product for i in inventory_items]
-        else:
-            # Stats globales entreprise
-            products = db.query(models.Product).filter(models.Product.company_id == cid).all()
-            total_products = len(products)
-            total_qty = sum((p.quantity or 0) for p in products)
-            total_value = sum((p.price or 0) * (p.quantity or 0) for p in products)
-            alerts = [p for p in products if (p.quantity or 0) <= (p.min_threshold or 0)]
-        
-        if not products and not branch_id:
-            return {
-                "summary": {"total_products": 0, "alerts_count": 0, "total_value": 0, "total_qty": 0},
-                "alerts": [], "top_5": [], "top_sold": [], "movements": [], "trend": []
-            }
-
-        # Real trends from StockMovements
-        today = datetime.now().date()
-        start_date = today - timedelta(days=6)
-        
-        movements_query = db.query(models.StockMovement).filter(models.StockMovement.company_id == cid)
-        if branch_id:
-            movements_query = movements_query.filter(models.StockMovement.branch_id == branch_id)
-        movements_db = movements_query.all()
-
-        # Aggregate by day for IN and OUT
-        trend_dict = { (start_date + timedelta(days=i)).strftime("%A"): {"in": 0, "out": 0} for i in range(7) }
-        
-        for mov in movements_db:
-            mov_date = mov.created_at.date() if mov.created_at else today
-            if start_date <= mov_date <= today:
-                day_name = mov_date.strftime("%A")
-                if day_name in trend_dict:
-                    if mov.movement_type == "IN" or (mov.quantity and mov.quantity > 0):
-                        trend_dict[day_name]["in"] += abs(mov.quantity or 0)
-                    else:
-                        trend_dict[day_name]["out"] += abs(mov.quantity or 0)
-                    
-        trend = [{"day": day, "in": data["in"], "out": data["out"]} for day, data in trend_dict.items()]
-
-        # Top 5
-        top_5 = sorted(products, key=lambda x: (x.quantity or 0), reverse=True)[:5]
-
-        # Top Sold
-        top_sold_query = db.query(
-            models.Product.name, 
-            func.sum(models.SaleItem.quantity).label('total_sold')
-        ).join(models.SaleItem).join(models.Sale).filter(
-            models.Sale.company_id == cid
-        )
-        if branch_id:
-            top_sold_query = top_sold_query.filter(models.Sale.branch_id == branch_id)
-        
-        top_sold_db = top_sold_query.group_by(models.Product.id).order_by(func.sum(models.SaleItem.quantity).desc()).limit(5).all()
-        top_sold = [{"name": row.name, "total_sold": int(row.total_sold)} for row in top_sold_db]
-
-        # Recent Movements
-        movements_recent_query = db.query(models.StockMovement).filter(models.StockMovement.company_id == cid)
-        if branch_id:
-            movements_recent_query = movements_recent_query.filter(models.StockMovement.branch_id == branch_id)
-        movements_recent = movements_recent_query.order_by(models.StockMovement.created_at.desc()).limit(10).all()
-        
-        movements_list = []
-        for m in movements_recent:
-            p = db.query(models.Product).filter(models.Product.id == m.product_id).first()
-            movements_list.append({
-                "id": m.id,
-                "product_name": p.name if p else "Produit inconnu",
-                "quantity": m.quantity,
-                "reason": m.reason,
-                "date": m.created_at.strftime("%d/%m %H:%M") if m.created_at else "--"
-            })
-        
-        return {
-            "summary": {
-                "total_products": total_products,
-                "alerts_count": len(alerts),
-                "total_value": total_value,
-                "total_qty": total_qty
-            },
-            "alerts": [{"id": p.id, "name": p.name, "quantity": p.quantity, "supplier": (p.supplier.name if p.supplier else "N/A")} for p in alerts],
-            "top_5": [{"name": p.name, "quantity": p.quantity} for p in top_5],
-            "top_sold": top_sold,
-            "movements": movements_list,
-            "trend": trend
-        }
+        return services.get_dashboard_stats_data(db, current_user.company_id, branch_id)
     except Exception as e:
         import traceback
         print(f"Erreur Stats: {e}")
@@ -496,27 +454,28 @@ def get_dashboard_stats(branch_id: Optional[int] = None, current_user: models.Us
             "alerts": [], "top_5": [], "top_sold": [], "movements": [], "trend": []
         }
 
-@app.get("/products/{product_id}/analyze")
-@app.get("/api/products/{product_id}/analyze")
-def analyze_product_mcp(product_id: int, current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Produit non trouvé")
-    
-    qty = product.quantity or 0
-    thresh = product.min_threshold or 0
-    
-    # Simulation d'analyse IA "MCP"
-    if qty <= thresh:
-        advice = f"Stock de {product.name} faible ({qty} unités), prévoyez une commande."
-    elif qty < thresh * 2:
-        advice = f"Stock de {product.name} moyen ({qty} unités), surveillez les ventes."
-    else:
-        advice = f"Stock de {product.name} optimal ({qty} unités), aucune action requise."
+@app.post("/api/mcp/analyze")
+def analyze_product_mcp_post(data: schemas.ProductAnalyzeRequest, current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
+    try:
+        advice = services.analyze_product_mcp(db, data.product_id, current_user.company_id, current_user.id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+        
+    # Get or create an AGENT user for logging
+    agent = db.query(models.User).filter(models.User.company_id == current_user.company_id, models.User.user_type == "AGENT").first()
+    if not agent:
+        import secrets
+        agent = models.User(email=f"mcp_agent_{secrets.token_hex(4)}@agent.local", user_type="AGENT", company_id=current_user.company_id)
+        db.add(agent)
+        db.commit()
+        db.refresh(agent)
+        
+    # Log the analysis as AGENT
+    log_audit(db, agent.id, f"ANALYSE_PREDICTIVE_{data.product_id}", "N/A", advice, current_user.company_id)
         
     return {"analysis": advice}
 
-@app.get("/scan/{barcode}")
+@app.get("/scan/{barcode}", response_model=schemas.ProductResponse)
 def scan_product(barcode: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(
         (models.Product.barcode == barcode) | (models.Product.sku == barcode) | (models.Product.id.cast(models.String) == barcode),
@@ -529,8 +488,10 @@ def scan_product(barcode: str, current_user: models.User = Depends(get_current_u
 def scan_add(data: dict, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.barcode == data.get('barcode'), models.Product.company_id == current_user.company_id).first()
     if not product: raise HTTPException(status_code=404)
+    old_qty = product.quantity
     product.quantity += data.get('quantity', 1)
     db.commit()
+    log_audit(db, current_user.id, "SCAN_ADD_STOCK", str(old_qty), str(product.quantity), current_user.company_id)
     return {"new_quantity": product.quantity}
 
 @app.post("/scan/sell")
@@ -538,13 +499,15 @@ def scan_sell(data: dict, current_user: models.User = Depends(get_current_user),
     product = db.query(models.Product).filter(models.Product.barcode == data.get('barcode'), models.Product.company_id == current_user.company_id).first()
     if not product: raise HTTPException(status_code=404)
     if product.quantity > 0:
+        old_qty = product.quantity
         product.quantity -= data.get('quantity', 1)
         db.commit()
+        log_audit(db, current_user.id, "SCAN_SELL_STOCK", str(old_qty), str(product.quantity), current_user.company_id)
         return {"new_quantity": product.quantity}
     raise HTTPException(status_code=400)
 
-@app.get("/branches")
-@app.get("/api/branches")
+@app.get("/branches", response_model=List[schemas.BranchResponse])
+@app.get("/api/branches", response_model=List[schemas.BranchResponse])
 def get_branches(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     cid = current_user.company_id if current_user else 1
     return db.query(models.Branch).filter(models.Branch.company_id == cid).all()
@@ -554,8 +517,8 @@ def get_suppliers(current_user: Optional[models.User] = Depends(get_current_user
     cid = current_user.company_id if current_user else 1
     return db.query(models.Supplier).filter(models.Supplier.company_id == cid).all()
 
-@app.get("/sales")
-@app.get("/api/sales")
+@app.get("/sales", response_model=List[schemas.SaleResponse])
+@app.get("/api/sales", response_model=List[schemas.SaleResponse])
 def get_sales(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
     cid = current_user.company_id if current_user else 1
     return db.query(models.Sale).filter(models.Sale.company_id == cid).all()
@@ -598,6 +561,74 @@ def get_invoice_html(sale_id: int, db: Session = Depends(get_db)):
 def get_movements(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
     cid = current_user.company_id if current_user else 1
     return db.query(models.StockMovement).filter(models.StockMovement.company_id == cid).order_by(models.StockMovement.created_at.desc()).all()
+
+@app.get("/api/audit_logs", response_model=List[schemas.AuditLogResponse])
+def get_audit_logs(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    logs = db.query(models.AuditLog).filter(models.AuditLog.company_id == current_user.company_id).order_by(models.AuditLog.timestamp.desc()).all()
+    for log in logs:
+        user = db.query(models.User).filter(models.User.id == log.user_id).first()
+        if user:
+            log.user_email = user.email
+            log.user_type = user.user_type
+    return logs
+
+@app.post("/api/agents", response_model=schemas.AgentAccessResponse)
+def create_agent(data: schemas.AgentAccessCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.user_type != "HUMAIN":
+        raise HTTPException(status_code=403, detail="Seuls les humains peuvent créer des agents")
+        
+    api_key = secrets.token_urlsafe(32)
+    email = f"agent_{secrets.token_hex(4)}@agent.local"
+    
+    new_user = models.User(
+        email=email,
+        hashed_password=None,
+        user_type="AGENT",
+        api_key=api_key,
+        company_id=current_user.company_id,
+        branch_id=current_user.branch_id
+    )
+    db.add(new_user)
+    db.commit()
+    
+    return {"email": email, "api_key": api_key, "user_type": "AGENT"}
+
+@app.get("/api/agents", response_model=List[schemas.AgentAccessResponse])
+def get_agents(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(models.User).filter(models.User.company_id == current_user.company_id, models.User.user_type == "AGENT").all()
+
+# --- ROUTES DE MAINTENANCE (ADMIN SEULEMENT) ---
+import seed_data
+
+@app.post("/api/admin/seed")
+def seed_database_route(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.user_type != "ADMIN":
+        raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs.")
+    seed_data.seed()
+    return {"status": "success", "message": "Base de données initialisée avec succès."}
+
+@app.post("/api/admin/clean")
+def clean_database_route(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.user_type != "ADMIN":
+        raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs.")
+    try:
+        db.query(models.ActivityLog).delete()
+        db.query(models.AuditLog).delete()
+        db.query(models.StockMovement).delete()
+        db.query(models.SaleItem).delete()
+        db.query(models.Sale).delete()
+        db.query(models.TransferRequest).delete()
+        db.query(models.Customer).delete()
+        db.query(models.Inventory).delete()
+        db.query(models.Product).delete()
+        db.query(models.Supplier).delete()
+        # Ne pas supprimer les utilisateurs pour garder l'accès admin
+        # Ne pas supprimer les entreprises et branches
+        db.commit()
+        return {"status": "success", "message": "Base de données nettoyée avec succès (structure et utilisateurs conservés)."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erreur lors du nettoyage : {e}")
 
 frontend_path = pathlib.Path(__file__).parent.parent / "frontend"
 if frontend_path.exists():

@@ -57,6 +57,9 @@ class ProductUpdate(BaseModel):
     status: Optional[ProductStatus] = None
     supplier_id: Optional[int] = None
 
+class ProductAnalyzeRequest(BaseModel):
+    product_id: int
+
 class InventoryResponse(BaseModel):
     id: int
     branch_id: int
@@ -97,6 +100,27 @@ class TransferCreate(BaseModel):
     to_branch_id: int
     quantity: int
 
+class TransferRequestCreate(BaseModel):
+    product_id: int
+    from_branch_id: int
+    to_branch_id: int
+    quantity: int
+
+class TransferRequestResponse(BaseModel):
+    id: int
+    product_id: int
+    from_branch_id: int
+    to_branch_id: int
+    quantity: int
+    status: str
+    requester_id: int
+    approver_id: Optional[int] = None
+    created_at: datetime
+    product: ProductResponse
+    from_branch: BranchResponse
+    to_branch: BranchResponse
+    class Config:
+        from_attributes = True
 
 # --- BONS DE COMMANDE ---
 class PurchaseOrderCreate(BaseModel):
@@ -178,10 +202,32 @@ class ActivityLogResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class AuditLogResponse(BaseModel):
+    id: int
+    user_id: int
+    user_email: Optional[str] = None
+    user_type: Optional[str] = None
+    action: str
+    timestamp: datetime
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    company_id: int
+    class Config:
+        from_attributes = True
+
 # --- AUTHENTIFICATION ---
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+
+class AgentAccessCreate(BaseModel):
+    name: str
+
+class AgentAccessResponse(BaseModel):
+    email: str
+    api_key: str
+    user_type: str
+
 
 class UserSignUp(BaseModel):
     email: EmailStr

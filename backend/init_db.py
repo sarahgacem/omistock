@@ -41,15 +41,23 @@ def init_db():
     db.refresh(b_alger)
     db.refresh(b_oran)
 
-    # 3. Créer l'utilisateur admin
-    print("Création de l'utilisateur admin...")
+    # 3. Création des utilisateurs
+    print("Création des utilisateurs...")
     admin = models.User(
         email="admin@test.com",
         hashed_password=security.get_password_hash("password123"),
         company_id=company.id,
-        branch_id=b_alger.id
+        branch_id=b_alger.id,
+        user_type="ADMIN"
     )
-    db.add(admin)
+    oran_admin = models.User(
+        email="oran@test.com",
+        hashed_password=security.get_password_hash("password123"),
+        company_id=company.id,
+        branch_id=b_oran.id,
+        user_type="ADMIN"
+    )
+    db.add_all([admin, oran_admin])
     db.commit()
     
     # 4. Création des Fournisseurs
