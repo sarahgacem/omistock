@@ -10,10 +10,10 @@
         body { font-family: 'Outfit', sans-serif; background-color: #f4f7f9; color: #1e293b; }
         
         /* Sidebar OMISTOCK (Conservée pour la cohérence globale) */
-        .sidebar { background: #475569; }
-        .sidebar .active { background: #4fd1c5; color: white; border-radius: 12px; }
-        .sidebar .nav-item { color: #e2e8f0; transition: all 0.3s; padding: 12px 16px; border-radius: 12px; }
-        .sidebar .nav-item:hover:not(.active) { background: rgba(255,255,255,0.1); }
+        .sidebar { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
+        .sidebar .active { background: #2dd4bf; color: white; box-shadow: 0 10px 20px -5px rgba(45, 212, 191, 0.4); }
+        .sidebar .nav-item { color: #94a3b8; transition: all 0.3s; padding: 16px; border-radius: 16px; }
+        .sidebar .nav-item:hover:not(.active) { color: white; background: rgba(255,255,255,0.05); }
         
         /* Cartes Style Honestoc (depuis les maquettes) */
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03); border: 1px solid #f1f5f9; }
@@ -39,55 +39,64 @@
 <body class="flex min-h-screen">
 
     <!-- Sidebar (OMISTOCK) -->
-    <aside class="sidebar w-64 flex flex-col p-6 text-white fixed h-full z-50">
-        <div class="mb-10 flex items-center gap-3 bg-white p-3 rounded-xl">
-            <div class="w-8 h-8 flex items-center justify-center">
-                <svg class="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+    <aside class="sidebar w-72 flex flex-col p-8 text-white fixed h-full z-50">
+        <div class="mb-12 flex items-center gap-3">
+            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
             </div>
-            <h2 class="text-sm font-bold text-slate-800 tracking-tight truncate" id="company_name_sidebar">OMISTOCK</h2>
+            <h2 class="text-xl font-bold tracking-tight uppercase" id="company_name_sidebar">OMISTOCK</h2>
         </div>
 
-        <nav class="space-y-2 flex-1">
-            <a href="dashboard.html" class="nav-item flex items-center gap-3">
+        <nav class="space-y-3 flex-1">
+            <a href="dashboard.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                <span class="font-medium text-sm">Dashboard</span>
+                <span class="font-medium">Dashboard</span>
             </a>
-            <a href="inventory.html" class="nav-item flex items-center gap-3">
+            <a href="inventory.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                <span class="font-medium text-sm">Stock</span>
+                <span class="font-medium">Stock</span>
             </a>
-            <a href="sales.html" class="nav-item flex items-center gap-3">
+            <a href="sales.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span class="font-medium text-sm">Commandes</span>
+                <span class="font-medium">Commandes</span>
             </a>
-            <a href="suppliers.html" class="nav-item flex items-center gap-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span class="font-medium text-sm">Fournisseurs</span>
-            </a>
-            <a href="reports.html" class="nav-item flex items-center gap-3">
+            <a href="reports.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span class="font-medium text-sm">Rapports</span>
+                <span class="font-medium">Rapports</span>
             </a>
-            <a href="logs.html" class="nav-item flex items-center gap-3">
+            <a href="suppliers.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span class="font-medium">Fournisseurs</span>
+            </a>
+            <a href="logs.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span class="font-medium text-sm">Activity Logs</span>
+                <span class="font-medium">Activity Logs</span>
             </a>
-            <a href="settings.html" class="nav-item active flex items-center gap-3">
+            <a href="settings.html" class="nav-item active flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="font-medium text-sm">Paramètres</span>
+                <span class="font-medium">Paramètres</span>
             </a>
         </nav>
-        
-        <div class="mt-auto pt-4 border-t border-slate-500 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs" id="user_avatar">A</div>
-            <div class="flex-1 truncate">
-                <p class="text-xs font-semibold truncate" id="user_email_sidebar">...</p>
+
+        <div class="mt-auto p-6 bg-white/5 rounded-3xl border border-white/10">
+            <p class="text-xs text-slate-400 mb-2 uppercase tracking-widest font-bold">Session Active</p>
+            <div class="flex items-center gap-2 mb-1">
+                <p class="text-sm font-semibold truncate" id="user_email_sidebar">...</p>
+                <span id="user_role_badge" class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/30 uppercase">...</span>
             </div>
+            <p class="text-[10px] text-slate-400 font-bold" id="user_branch_sidebar">...</p>
+            
+
+
+            <button onclick="logout()" class="mt-6 w-full py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-rose-500/20">
+                <span>Déconnexion</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-64 flex flex-col">
+    <main class="flex-1 ml-72 flex flex-col">
         <!-- Top Bar -->
         <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-10 sticky top-0">
             <h1 class="text-xl font-bold text-slate-800">Paramètres</h1>
@@ -313,25 +322,53 @@
                 </div>
 
                 <!-- Maintenance & Sauvegarde -->
-                <div class="card p-6 border-2 border-slate-100">
+                <div id="admin_maintenance" class="card p-6 border-2 border-slate-100 hidden">
                     <div class="flex items-center gap-2 mb-4">
                         <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <h2 class="text-lg font-bold text-slate-800">Maintenance & Sauvegarde</h2>
                     </div>
-                    <p class="text-sm text-slate-500 mb-6">Gérez l'intégrité de vos données et effectuez des copies de sécurité régulières.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                            <h3 class="text-sm font-bold text-slate-700 mb-2">Sauvegarde complète</h3>
-                            <p class="text-xs text-slate-500 mb-4">Télécharge une copie complète de la base de données actuelle (.db).</p>
-                            <button onclick="backupDatabase()" class="w-full btn-solid-blue flex items-center justify-center gap-2">
+                    <p class="text-sm text-slate-500 mb-6">Gérez l'intégrité de vos données, effectuez des copies de sécurité ou réinitialisez le système pour la démonstration.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Sauvegarde -->
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-700 mb-2">Sauvegarde complète</h3>
+                                <p class="text-xs text-slate-500 mb-4">Télécharge une copie complète de la base de données actuelle (.db).</p>
+                            </div>
+                            <button onclick="backupDatabase(this)" class="w-full btn-solid-blue flex items-center justify-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 Sauvegarder la Base
                             </button>
                         </div>
-                        <div class="p-4 bg-rose-50 rounded-xl border border-rose-100">
-                            <h3 class="text-sm font-bold text-rose-800 mb-2">Nettoyage critique</h3>
-                            <p class="text-xs text-rose-500 mb-4">Supprime tous les logs et mouvements de stock (Action irréversible).</p>
-                            <button onclick="cleanDatabase()" class="w-full btn-outline-red text-sm">Vider les Tables</button>
+                        <!-- Seeding -->
+                        <div class="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-emerald-800 mb-2">Données de démo (Seeding)</h3>
+                                <p class="text-xs text-emerald-600 mb-4">Initialise ou réinjecte un jeu complet de 10 produits, 5 ventes et 2 fournisseurs.</p>
+                            </div>
+                            <button onclick="adminAction('seed')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17.5M12 9V4M9 9h6"></path></svg>
+                                Initialiser la Base
+                            </button>
+                        </div>
+                        <!-- Vider -->
+                        <div class="p-4 bg-rose-50 rounded-xl border border-rose-100 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-rose-800 mb-2">Nettoyage critique</h3>
+                                <p class="text-xs text-rose-500 mb-4">Supprime tous les produits, mouvements de stock, ventes et logs (Action irréversible).</p>
+                            </div>
+                            <button onclick="cleanDatabase()" class="w-full btn-outline-red text-sm flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Vider les Tables
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Explication SQLite binaire -->
+                    <div class="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3 text-xs leading-relaxed text-blue-800">
+                        <svg class="w-5 h-5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div>
+                            <span class="font-bold">Note d'intégrité de la Sauvegarde :</span>
+                            Le fichier téléchargé est une copie binaire brute de votre base de données SQLite (<code class="bg-blue-100 px-1 py-0.5 rounded font-mono">.db</code>). Windows n'intégrant pas de lecteur natif pour ce format professionnel, double-cliquer dessus affichera une erreur. C'est le comportement attendu et correct ! Vos données y sont entièrement structurées. Pour explorer ou interroger vos tables directement sous Windows, vous pouvez utiliser l'outil gratuit <a href="https://sqlitebrowser.org/" target="_blank" class="underline font-bold hover:text-blue-950">DB Browser for SQLite</a>.
                         </div>
                     </div>
                 </div>
@@ -341,7 +378,7 @@
     </main>
 
     <script>
-        function init() {
+        async function init() {
             const token = localStorage.getItem('omistock_token');
             if (!token) { window.location.href = 'index.html'; return; }
             
@@ -357,18 +394,36 @@
             
             // Mise à jour de l'UI avec les données dynamiques
             document.getElementById('user_email_sidebar').textContent = userEmail;
-            document.getElementById('user_avatar').textContent = initials[0];
             
             document.getElementById('profile_avatar').textContent = initials;
             document.getElementById('profile_name').textContent = fullName;
             document.getElementById('profile_email').textContent = userEmail;
             document.getElementById('contact_email').textContent = userEmail;
             
+            // Enrich details via profile call
+            try {
+                const meRes = await fetch(`/api/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (meRes.ok) {
+                    const currentUser = await meRes.json();
+                    document.getElementById('user_email_sidebar').textContent = currentUser.email;
+                    document.getElementById('user_role_badge').textContent = currentUser.user_type || 'ADMIN';
+                    document.getElementById('user_branch_sidebar').textContent = currentUser.branch_name || 'Admin Central';
+                    
+                    if (currentUser.user_type === 'ADMIN') {
+                        document.getElementById('admin_maintenance').classList.remove('hidden');
+                    }
+                }
+            } catch (e) {
+                console.error("Erreur de profil:", e);
+            }
+
             // Différenciation dynamique par entreprise (Multi-Tenant)
             const isFood = userEmail.includes("food");
-            const companyName = isFood ? "Alimentation DZ" : "Société Pharma/Tech";
+            const companyName = isFood ? "AGRO-INDUSTRIE DZ" : "OMISTOCK BUSINESS SOLUTIONS";
             const locationStr = isFood ? "Constantine, Algérie" : "Alger & Oran, Algérie";
-            const companyEmail = isFood ? "contact@alimentation-dz.com" : "contact@sante-pro.dz";
+            const companyEmail = isFood ? "contact@agro-industrie.dz" : "contact@omistock.dz";
             
             document.getElementById('company_name_sidebar').textContent = companyName.toUpperCase();
             localStorage.setItem('omistock_company', companyName);
@@ -473,70 +528,80 @@
             }
         }
 
-        async function backupDatabase() {
+        async function backupDatabase(btnElement) {
             const token = localStorage.getItem('omistock_token');
-            const btn = event.currentTarget;
-            const originalHTML = btn.innerHTML;
-            
-            btn.disabled = true;
-            btn.innerHTML = "...";
+            const btn = btnElement || document.querySelector("button[onclick*='backupDatabase']");
+            let originalHTML = "Sauvegarder la Base";
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = "...";
+            }
 
             try {
                 const response = await fetch('/api/admin/backup', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
 
-                if (response.ok) {
-                    const blob = await response.json(); // Wait, FileResponse is a file stream
-                    // Re-doing fetch to handle blob properly
-                }
-                
-                // Better way to download file in JS:
-                window.location.href = `/api/admin/backup?token=${token}`; 
-                // Wait, our route expects Depends(get_current_user) which looks at Authorization header.
-                // We'll use a fetch + blob approach.
-                
-                const resp = await fetch('/api/admin/backup', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const blob = await resp.blob();
+                if (!response.ok) throw new Error("Backup failed");
+
+                const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `backup_omistock_${new Date().toISOString().split('T')[0]}.db`;
+                a.download = `omistock_backup.db`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
                 
-                btn.classList.replace('btn-solid-blue', 'bg-emerald-600');
-                btn.innerHTML = "Sauvegarde OK !";
-                setTimeout(() => {
-                    btn.classList.replace('bg-emerald-600', 'btn-solid-blue');
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                }, 2000);
+                if (btn) {
+                    btn.classList.replace('btn-solid-blue', 'bg-emerald-600');
+                    btn.innerHTML = "Sauvegarde OK !";
+                    setTimeout(() => {
+                        btn.classList.replace('bg-emerald-600', 'btn-solid-blue');
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }, 2000);
+                }
             } catch (e) {
                 alert("Erreur lors de la sauvegarde");
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        async function adminAction(actionType) {
+            const token = localStorage.getItem('omistock_token');
+            if (!token) return;
+
+            const confirmMsg = actionType === 'seed' 
+                ? "Initialiser la base de données avec les données de démonstration ?" 
+                : "ATTENTION : Nettoyer toutes les données ? (Historique, ventes, mouvements)";
+            if (!confirm(confirmMsg)) return;
+
+            if (actionType === 'clean') {
+                alert("Sauvegarde préventive automatique avant nettoyage...");
+                await backupDatabase();
+            }
+
+            try {
+                const response = await fetch(`/api/admin/${actionType}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const resData = await response.json();
+                alert(resData.message || "Opération réussie !");
+                window.location.reload();
+            } catch (e) {
+                alert("Erreur lors de l'opération");
             }
         }
 
         async function cleanDatabase() {
-            if (!confirm("ATTENTION : Cette action va supprimer toutes les données de transaction (ventes, logs, mouvements). Continuer ?")) return;
-            
-            const token = localStorage.getItem('omistock_token');
-            try {
-                const response = await fetch('/api/admin/clean', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    alert("Base de données nettoyée avec succès.");
-                } else {
-                    alert("Erreur lors du nettoyage.");
-                }
-            } catch (e) { alert("Erreur réseau"); }
+            await adminAction('clean');
         }
 
         window.onload = () => {

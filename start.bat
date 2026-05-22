@@ -58,14 +58,14 @@ echo.
 echo  [4/4] Demarrage des services...
 echo.
 
-echo  >>> Lancement du Serveur FastAPI (Backend API)...
+echo  --- Lancement du Serveur FastAPI (Backend API)...
 start "OMISTOCK - Backend API :8000" cmd /k "chcp 65001 >nul && color 0B && echo. && echo  [BACKEND] FastAPI - http://localhost:8000 && echo  [BACKEND] Docs   - http://localhost:8000/docs && echo  [BACKEND] App    - http://localhost:8000/app && echo. && python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000"
 
 :: Attendre que l'API soit prête avant de lancer le MCP
 echo  [INFO] Attente du demarrage de l'API (5 secondes)...
-timeout /t 5 /nobreak >nul
+ping -n 6 127.0.0.1 >nul
 
-echo  >>> Lancement du Serveur MCP (Agent IA)...
+echo  --- Lancement du Serveur MCP (Agent IA)...
 start "OMISTOCK - MCP Agent IA" cmd /k "chcp 65001 >nul && color 0E && echo. && echo  [MCP] Serveur Agent IA - En ecoute (stdio) && echo  [MCP] API cible : http://localhost:8000 && echo  [MCP] Cle Agent : %AGENT_API_KEY:~0,8%... && echo. && set AGENT_API_KEY=%AGENT_API_KEY% && set API_BASE_URL=http://localhost:8000 && cd mcp && python server.py"
 
 echo.
@@ -83,3 +83,4 @@ echo    - Jaune  : Serveur MCP (Agent IA)
 echo.
 echo   Fermez cette fenetre ou appuyez sur une touche pour quitter.
 pause >nul
+

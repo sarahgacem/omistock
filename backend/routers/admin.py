@@ -46,16 +46,18 @@ def get_backup(current_user: models.User = Depends(get_current_user)):
     if not os.path.exists(db_path):
         raise HTTPException(status_code=404, detail="Fichier base de données introuvable.")
     
+    import zipfile
     date_str = datetime.now().strftime("%Y_%m_%d")
-    backup_filename = f"backup_omistock_{date_str}.db"
-    backup_path = os.path.join(os.path.dirname(db_path), backup_filename)
+    zip_filename = f"backup_omistock_{date_str}.zip"
+    zip_path = os.path.join(os.path.dirname(db_path), zip_filename)
     
-    shutil.copyfile(db_path, backup_path)
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        zipf.write(db_path, arcname=f"omistock_backup_{date_str}.db")
     
     return FileResponse(
-        path=backup_path,
-        filename=backup_filename,
-        media_type='application/x-sqlite3'
+        path=zip_path,
+        filename=zip_filename,
+        media_type='application/zip'
     )
 
 @router.get("/api/audit/export")

@@ -22,7 +22,7 @@ def auto_seed_if_empty():
         if user_count == 0:
             import seed_data
             print("[AUTO-SEED] Base vide. Initialisation par défaut...")
-            seed_data.seed()
+            seed_data.seed(admin_only=True)
     except Exception as e:
         print(f"ERR Auto-seed: {e}")
     finally:

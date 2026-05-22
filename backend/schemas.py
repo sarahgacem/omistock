@@ -52,6 +52,7 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = None
     sku: Optional[str] = None
     barcode: Optional[str] = None
+    quantity: Optional[int] = None
     price: Optional[float] = None
     min_threshold: Optional[int] = None
     status: Optional[ProductStatus] = None

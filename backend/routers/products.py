@@ -45,9 +45,27 @@ def update_product(product_id: int, product: schemas.ProductUpdate, current_user
     db_product = db.query(models.Product).filter(models.Product.id == product_id, models.Product.company_id == current_user.company_id).first()
     if not db_product: raise HTTPException(status_code=404)
     update_data = product.dict(exclude_unset=True)
+    
+    # If the user belongs to a specific branch, updating quantity ONLY updates their local branch inventory
+    if current_user.branch_id and "quantity" in update_data:
+        inventory = db.query(models.Inventory).filter(models.Inventory.product_id == product_id, models.Inventory.branch_id == current_user.branch_id).first()
+        if inventory:
+            inventory.quantity = update_data["quantity"]
+        else:
+            inventory = models.Inventory(product_id=product_id, branch_id=current_user.branch_id, quantity=update_data["quantity"], min_threshold=db_product.min_threshold)
+            db.add(inventory)
+        del update_data["quantity"]
+        db.commit()
+        
+        # Recalculate global product quantity based on all branch inventories
+        total = sum([inv.quantity for inv in db_product.inventory])
+        db_product.quantity = total
+        db.commit()
+
     for key, value in update_data.items():
         setattr(db_product, key, value)
     db.commit()
+    
     return {"status": "updated"}
 
 @router.delete("/api/products/{product_id}")
@@ -99,6 +117,68 @@ def get_suppliers(current_user: Optional[models.User] = Depends(get_current_user
 def get_sales(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
     cid = current_user.company_id if current_user else 1
     return db.query(models.Sale).filter(models.Sale.company_id == cid).all()
+
+@router.post("/api/sales", response_model=schemas.SaleResponse)
+def create_sale(sale: schemas.SaleCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    cid = current_user.company_id
+    
+    total_amount = 0.0
+    db_sale = models.Sale(
+        customer_id=sale.customer_id,
+        company_id=cid,
+        branch_id=sale.branch_id,
+        total_amount=0.0
+    )
+    db.add(db_sale)
+    db.commit()
+    db.refresh(db_sale)
+    
+    for item in sale.items:
+        inventory = db.query(models.Inventory).filter(
+            models.Inventory.product_id == item.product_id,
+            models.Inventory.branch_id == sale.branch_id
+        ).first()
+        
+        if not inventory or inventory.quantity < item.quantity:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Stock insuffisant pour le produit {item.product_id}")
+            
+        inventory.quantity -= item.quantity
+        
+        item_total = item.quantity * item.unit_price
+        total_amount += item_total
+        
+        db_item = models.SaleItem(
+            sale_id=db_sale.id,
+            product_id=item.product_id,
+            quantity=item.quantity,
+            unit_price=item.unit_price
+        )
+        db.add(db_item)
+        
+        movement = models.StockMovement(
+            product_id=item.product_id,
+            branch_id=sale.branch_id,
+            quantity=-item.quantity,
+            reason=f"Vente Web #{db_sale.id}",
+            company_id=cid,
+            movement_type="OUT"
+        )
+        db.add(movement)
+        
+        # update global quantity
+        product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
+        if product:
+            product.quantity -= item.quantity
+        
+    db_sale.total_amount = total_amount
+    db.commit()
+    db.refresh(db_sale)
+    
+    from services import log_audit
+    log_audit(db, current_user.id, f"VENTE_WEB_CREEE_{db_sale.id}", "N/A", f"Montant: {total_amount}", cid)
+    
+    return db_sale
 
 @router.get("/api/movements", response_model=List[schemas.StockMovementResponse])
 def get_movements(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):

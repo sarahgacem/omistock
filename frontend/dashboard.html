@@ -115,20 +115,7 @@
                 <span id="user_role_badge" class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/30 uppercase">...</span>
             </div>
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tight" id="user_branch_sidebar">Chargement dépôt...</p>
-            
-            <!-- Maintenance Section (Admin Only) -->
-            <div id="admin_maintenance" class="hidden mt-6 pt-6 border-t border-white/10 space-y-3">
-                <p class="text-[10px] text-amber-400 font-black uppercase tracking-widest mb-2">Maintenance Système</p>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="adminAction('seed')" class="py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white text-[10px] font-bold rounded-lg border border-emerald-500/20 transition-all">
-                        Seed DB
-                    </button>
-                    <button onclick="adminAction('clean')" class="py-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-[10px] font-bold rounded-lg border border-rose-500/20 transition-all">
-                        Clean DB
-                    </button>
-                </div>
-            </div>
-
+            <div id="admin_maintenance" class="hidden"></div>
             <button onclick="logout()" class="mt-6 w-full py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-rose-500/20">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 <span>Déconnexion</span>
@@ -455,8 +442,6 @@
                         if (currentUser.user_type === 'ADMIN') {
                             document.getElementById('admin_maintenance').classList.remove('hidden');
                         }
-                        
-                        console.log("Profile loaded:", currentUser);
                     }
                 }
 
@@ -799,13 +784,40 @@
             });
         }
 
+        async function backupDatabase() {
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch('/api/admin/backup', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!response.ok) throw new Error("Backup failed");
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `omistock_backup.db`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showToast("Sauvegarde réussie !", "success");
+            } catch (e) {
+                showToast("Erreur lors de la sauvegarde", "error");
+            }
+        }
+
         async function adminAction(type) {
             if (!confirm(`Êtes-vous sûr de vouloir exécuter l'action : ${type} ?`)) return;
             
+            if (type === 'clean') {
+                alert("Sauvegarde préventive automatique avant nettoyage...");
+                await backupDatabase();
+            }
+
             const token = await getAuthToken();
             const res = await fetch(`${API_BASE}/api/admin/${type}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': 'Bearer ' + token }
             });
             
             if (res.ok) {
