@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>OMISTOCK Mobile</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- HTML5 QR Code -->
@@ -13,33 +18,10 @@
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
     
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
-        
-        /* Bottom Nav Styles */
-        .bottom-nav { padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #64748b; transition: color 0.2s; }
-        .nav-item.active { color: #0f172a; }
-        .nav-item.active i { fill: #f1f5f9; stroke-width: 2.5; }
-        
-        /* Floating Action Button */
-        .fab-container { position: absolute; left: 50%; transform: translateX(-50%); top: -24px; }
-        .fab { width: 56px; height: 56px; background-color: #0f172a; border-radius: 18px; display: flex; justify-content: center; align-items: center; color: white; box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.4), 0 4px 6px -2px rgba(15, 23, 42, 0.2); transition: transform 0.1s; }
-        .fab:active { transform: scale(0.95); }
-        
-        /* Modals and Overlays */
-        .modal-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
-        /* Scanner Container */
-        #login-reader, #product-reader { width: 100%; border-radius: 16px; overflow: hidden; border: none !important; }
-        #login-reader video, #product-reader video { object-fit: cover; }
-        
-        /* Hide scrollbar for cleaner UI */
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="text-slate-800 h-[100dvh] flex flex-col overflow-hidden relative">
+<body class="mobile-theme text-slate-800 h-[100dvh] flex flex-col overflow-hidden relative">
 
     <!-- ================== LOGIN SCREEN ================== -->
     <div id="login-screen" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 hidden">
@@ -254,7 +236,7 @@
 
         <!-- SECTION A: Camera view (shown when camera is available) -->
         <div id="scanner-camera-section" class="flex-1 flex flex-col items-center justify-center bg-black overflow-hidden p-4">
-            <div class="relative w-full max-w-sm mx-auto" style="aspect-ratio:1;">
+            <div class="relative w-full max-w-sm mx-auto scanner-aspect">
                 <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-xl z-10"></div>
                 <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-xl z-10"></div>
                 <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-xl z-10"></div>
@@ -567,8 +549,8 @@
                             <span class="${isLow ? 'text-rose-500' : 'text-emerald-500'}">${isLow ? 'Stock Critique' : 'Normal'}</span>
                             <span class="text-slate-600">${displayQty} / ${p.min_threshold} min</span>
                         </div>
-                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div class="h-full ${statusBg} rounded-full" style="width: ${Math.min((displayQty / (p.min_threshold * 2)) * 100, 100)}%"></div>
+                        <div class="progress-track">
+                            <div class="progress-fill ${statusBg}" style="--progress: ${Math.min((displayQty / (p.min_threshold * 2)) * 100, 100)}%"></div>
                         </div>
                     </div>
                 </div>
@@ -864,6 +846,29 @@
             } catch (e) {
                 showToast("Connexion au serveur OMISTOCK impossible. Veuillez vérifier votre réseau.", "error");
             }
+        }
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker
+                    .register('./sw.js', { scope: './' })
+                    .then(function (registration) {
+                        console.log(
+                            '[OMISTOCK PWA] Service Worker enregistré avec succès. Scope:',
+                            registration.scope
+                        );
+                    })
+                    .catch(function (error) {
+                        console.error(
+                            '[OMISTOCK PWA] Échec de l\'enregistrement du Service Worker:',
+                            error
+                        );
+                    });
+            });
+        } else {
+            console.warn('[OMISTOCK PWA] Service Worker non supporté par ce navigateur.');
         }
     </script>
 </body>

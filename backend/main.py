@@ -6,8 +6,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from jose import jwt
 import os, sys, pathlib
 
-# Fix: Ajouter le dossier backend au path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Fix: Ajouter backend et la racine projet au path (imports package + modules plats)
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(_backend_dir)
+sys.path.append(os.path.dirname(_backend_dir))
 
 import models, database, security
 from database import engine
@@ -71,10 +73,15 @@ app.include_router(admin.router)
 async def custom_404_handler(request: Request, exc: HTTPException):
     return JSONResponse(status_code=404, content={"message": "Ressource non trouvée", "path": request.url.path})
 
-# Frontend
-frontend_path = pathlib.Path(__file__).parent.parent / "frontend"
-if frontend_path.exists():
-    app.mount("/app", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+# Frontend statique (chemins compatibles local + Docker : OMISTOCK_ROOT=/app)
+PROJECT_ROOT = pathlib.Path(
+    os.environ.get("OMISTOCK_ROOT", str(pathlib.Path(__file__).resolve().parent.parent))
+)
+frontend_path = PROJECT_ROOT / "frontend"
+if frontend_path.is_dir():
+    app.mount("/app", StaticFiles(directory=str(frontend_path.resolve()), html=True), name="frontend")
+else:
+    print(f"[WARN] Dossier frontend introuvable : {frontend_path}")
 
 @app.get("/")
 def read_root():

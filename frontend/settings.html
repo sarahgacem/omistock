@@ -6,37 +6,13 @@
     <title>OMISTOCK - Paramètres</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background-color: #f4f7f9; color: #1e293b; }
-        
-        /* Sidebar OMISTOCK (Conservée pour la cohérence globale) */
-        .sidebar { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
-        .sidebar .active { background: #2dd4bf; color: white; box-shadow: 0 10px 20px -5px rgba(45, 212, 191, 0.4); }
-        .sidebar .nav-item { color: #94a3b8; transition: all 0.3s; padding: 16px; border-radius: 16px; }
-        .sidebar .nav-item:hover:not(.active) { color: white; background: rgba(255,255,255,0.05); }
-        
-        /* Cartes Style Honestoc (depuis les maquettes) */
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03); border: 1px solid #f1f5f9; }
-        
-        /* Boutons personnalisés */
-        .btn-outline-blue { border: 1px solid #1e3a8a; color: #1e3a8a; border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; }
-        .btn-outline-blue:hover { background: #eff6ff; }
-        .btn-outline-red { border: 1px solid #e11d48; color: #e11d48; border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; }
-        .btn-outline-red:hover { background: #fff1f2; }
-        .btn-solid-blue { background: #174092; color: white; border-radius: 8px; padding: 10px 20px; font-weight: 600; transition: all 0.2s; }
-        .btn-solid-blue:hover { background: #1e3a8a; }
-
-        /* Inputs */
-        .input-field { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 0.875rem; color: #334155; transition: border-color 0.2s; }
-        .input-field:focus { outline: none; border-color: #174092; box-shadow: 0 0 0 3px rgba(23, 64, 146, 0.1); }
-        .input-label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: 500; }
-        
-        /* Toggle Switch */
-        .toggle-checkbox:checked { right: 0; border-color: #174092; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #174092; }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex min-h-screen">
+<body class="light-theme flex min-h-screen">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/60 z-30"></div>
+
 
     <!-- Sidebar (OMISTOCK) -->
     <aside class="sidebar w-72 flex flex-col p-8 text-white fixed h-full z-50">
@@ -96,10 +72,13 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-72 flex flex-col">
+    <main class="erp-main flex-1 ml-72 flex flex-col">
         <!-- Top Bar -->
         <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-10 sticky top-0">
-            <h1 class="text-xl font-bold text-slate-800">Paramètres</h1>
+            <div class="flex items-center gap-4">
+                <button type="button" id="menu-toggle" class="menu-toggle lg:hidden" aria-label="Ouvrir le menu"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                <h1 class="text-xl font-bold text-slate-800">Paramètres</h1>
+            </div>
             <button class="text-slate-600 hover:text-slate-900 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
             </button>
@@ -608,6 +587,8 @@
             init();
             loadAgents();
         };
+    
     </script>
+    <script src="erp-sidebar.js"></script>
 </body>
 </html>

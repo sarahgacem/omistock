@@ -1,14 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-import schemas, models, services, security, database
+from typing import List
+import secrets
+
+from backend import repository
+import schemas
+import models
+import services
+import security
+from dependencies import get_current_user, oauth2_scheme
 from database import get_db
-from typing import List, Optional
 
 router = APIRouter()
 
-from dependencies import get_current_user, oauth2_scheme
-from database import get_db
 
 @router.get("/api/me")
 def get_me(current_user: models.User = Depends(get_current_user)):
@@ -21,16 +27,25 @@ def get_me(current_user: models.User = Depends(get_current_user)):
         "branch_name": branch_name,
         "company_id": current_user.company_id,
         "company_name": company_name,
-        "user_type": current_user.user_type
+        "user_type": current_user.user_type,
     }
+
 
 @router.post("/token", response_model=schemas.Token)
 @router.post("/api/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
     try:
         return services.authenticate_user(db, form_data)
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e), headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(
+            status_code=401,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
 
 @router.post("/api/signup")
 def signup(data: schemas.UserSignUp, db: Session = Depends(get_db)):
@@ -39,40 +54,61 @@ def signup(data: schemas.UserSignUp, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/api/agents", response_model=schemas.AgentAccessResponse)
-def create_agent(data: schemas.AgentAccessCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user.user_type != "ADMIN" and current_user.user_type != "HUMAIN":
+def create_agent_route(
+    data: schemas.AgentAccessCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.user_type not in ("ADMIN", "HUMAIN"):
         raise HTTPException(status_code=403, detail="Seuls les humains peuvent créer des agents")
-        
-    import secrets
+
     api_key = secrets.token_urlsafe(32)
     email = f"agent_{secrets.token_hex(4)}@agent.local"
-    
-    new_user = models.User(
-        email=email,
-        hashed_password=None,
-        user_type="AGENT",
-        api_key=api_key,
-        company_id=current_user.company_id,
-        branch_id=current_user.branch_id
+
+    repository.create_agent(
+        db,
+        {
+            "email": email,
+            "api_key": api_key,
+            "user_type": "AGENT",
+            "hashed_password": None,
+            "branch_id": current_user.branch_id,
+        },
+        current_user.company_id,
     )
-    db.add(new_user)
-    db.commit()
-    
+
     return {"email": email, "api_key": api_key, "user_type": "AGENT"}
 
+
 @router.get("/api/agents", response_model=List[schemas.AgentAccessResponse])
-def get_agents(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(models.User).filter(models.User.company_id == current_user.company_id, models.User.user_type == "AGENT").all()
+def get_agents_route(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    agents = repository.get_agents(db, current_user.company_id)
+    return [
+        {"email": a.email, "api_key": a.api_key, "user_type": a.user_type}
+        for a in agents
+    ]
+
 
 @router.get("/api/auth/qr-code")
-def generate_qr_code(token: str = Depends(oauth2_scheme), current_user: models.User = Depends(get_current_user)):
+def generate_qr_code(
+    token: str = Depends(oauth2_scheme),
+    current_user: models.User = Depends(get_current_user),
+):
     import qrcode
     import io
     import base64
-    from fastapi.responses import JSONResponse
-    
-    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
     qr.add_data(token)
     qr.make(fit=True)
 
@@ -80,5 +116,5 @@ def generate_qr_code(token: str = Depends(oauth2_scheme), current_user: models.U
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     img_b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    
+
     return JSONResponse({"qr_code": f"data:image/png;base64,{img_b64}"})

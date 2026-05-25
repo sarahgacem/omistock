@@ -1,8 +1,32 @@
-fastapi==0.109.0
-uvicorn==0.27.0
+# OMISTOCK — dépendances Python (API FastAPI)
+# Généré d'après les imports du backend
+
+# Framework API
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+starlette==0.35.1
+
+# ORM & base de données
 sqlalchemy==2.0.25
+
+# Validation & schémas
+pydantic==2.5.3
+pydantic[email]==2.5.3
+email-validator==2.1.0.post1
+
+# Authentification JWT & mots de passe
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
+bcrypt==4.1.2
+cryptography==42.0.2
+
+# Upload formulaires (OAuth2 / login)
+python-multipart==0.0.9
+
+# Utilitaires
 jinja2==3.1.3
-httpx
+httpx==0.26.0
+
+# QR code (route /api/auth/qr-code)
+qrcode[pil]==7.4.2
+pillow==10.2.0

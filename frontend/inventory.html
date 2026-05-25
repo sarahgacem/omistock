@@ -7,66 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background-color: #f1f5f9; color: #1e293b; }
-        .sidebar { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
-        .nav-item { color: #94a3b8; transition: all 0.3s; }
-        .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
-        .nav-item.active { background: #2dd4bf; color: white; box-shadow: 0 10px 20px -5px rgba(45, 212, 191, 0.4); }
-        .card { background: white; border-radius: 30px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04); }
-        .status-badge { @apply px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest; }
-        .modal { transition: opacity 0.3s; }
-        .modal.hidden { display: none; }
-        
-        /* Premium Tooltip */
-        [data-tooltip] { position: relative; }
-        [data-tooltip]:before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 8px 12px;
-            background: #1e293b;
-            color: white;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            border-radius: 10px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-        [data-tooltip]:hover:before {
-            opacity: 1;
-            visibility: visible;
-            bottom: 140%;
-        }
-        [data-tooltip]:after {
-            content: '';
-            position: absolute;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px;
-            border-style: solid;
-            border-color: #1e293b transparent transparent transparent;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        [data-tooltip]:hover:after {
-            opacity: 1;
-            visibility: visible;
-            bottom: 125%;
-        }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex min-h-screen">
+<body class="light-theme flex min-h-screen">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/60 z-30"></div>
+
 
     <!-- Sidebar -->
     <aside class="sidebar w-72 flex flex-col p-8 text-white fixed h-full z-50">
@@ -124,18 +71,21 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-72 p-12">
-        <header class="mb-12 flex justify-between items-end">
+    <main class="erp-main flex-1 ml-72 p-12">
+        <header class="mb-8 lg:mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-                <h1 class="text-5xl font-black text-slate-900 mb-2">Gestion du Stock</h1>
+                <div class="flex items-center gap-4 mb-2">
+                    <button type="button" id="menu-toggle" class="menu-toggle lg:hidden" aria-label="Ouvrir le menu"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                    <h1 class="text-3xl sm:text-5xl font-black text-slate-900">Gestion du Stock</h1>
+                </div>
                 <p class="text-slate-500 font-bold" id="product_count">Chargement...</p>
             </div>
             <button onclick="openModal('addModal')" class="bg-emerald-400 text-slate-900 px-6 py-3 rounded-2xl font-bold hover:bg-emerald-300 transition-all">+ Ajouter un produit</button>
         </header>
 
         <!-- Filters Row -->
-        <div class="flex items-center justify-between gap-6 mb-10">
-            <div class="flex items-center gap-4 flex-1">
+        <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 lg:gap-6 mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1">
                 <div class="relative flex-1">
                     <svg class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     <input type="text" id="searchInput" placeholder="Rechercher par nom ou SKU..." class="w-full bg-white border-none rounded-full py-5 pl-16 pr-8 shadow-sm outline-none font-medium focus:ring-2 focus:ring-emerald-400" oninput="applyFilters()">
@@ -156,7 +106,7 @@
                     <option value="Autre">Autre</option>
                 </select>
             </div>
-            <div class="flex bg-white rounded-full p-1.5 shadow-sm" id="stockFilterBtns">
+            <div class="flex overflow-x-auto bg-white rounded-full p-1.5 shadow-sm" id="stockFilterBtns">
                 <button onclick="setStockFilter('all', this)" class="active px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-400 text-white shadow-lg transition-all">Tous</button>
                 <button onclick="setStockFilter('faible', this)" class="px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Stock Faible</button>
                 <button onclick="setStockFilter('moyen', this)" class="px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Stock Moyen</button>
@@ -582,6 +532,8 @@
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
         window.onload = init;
+    
     </script>
+    <script src="erp-sidebar.js"></script>
 </body>
 </html>
