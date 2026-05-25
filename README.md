@@ -21,5 +21,19 @@ OMISTOCK est une plateforme web moderne de gestion d'inventaire multi-tenant, co
 
 Consultez le fichier [Installation Rapide](docs/installation.md) pour les instructions détaillées.
 
-## 📄 Licence
-Propriété de l'utilisateur - Usage démonstration et académique.
+# OMISTOCK - Système de Gestion de Stock Intelligent
+
+Ce dépôt contient la version finale propre et refactorisée du projet **OMISTOCK** (Application Web, Mobile PWA et Mémoire) pour la soutenance.
+
+## 🚀 Lancement rapide avec Docker
+
+Pour faciliter l'évaluation et garantir un environnement d'exécution strictement identique, l'application a été entièrement conteneurisée.
+
+### Prérequis
+* **Docker Desktop** installé et démarré sur votre machine.
+
+### Procédure de lancement
+1. Ouvrez un terminal à la racine du projet `omistock/`.
+2. Exécutez la commande suivante pour construire et lancer l'environnement unifié :
+```bash
+   docker compose up --build
