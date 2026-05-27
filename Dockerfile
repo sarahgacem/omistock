@@ -1,25 +1,37 @@
-# OMISTOCK — image applicative (API + frontend statique)
+# OMISTOCK — Dockerfile Render (Poetry + SQLite)
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Dépendances système pour bcrypt, cryptography et Pillow (qrcode)
+# Dépendances système utiles à cryptography/bcrypt/Pillow
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libffi-dev \
+    && apt-get install -y --no-install-recommends gcc libffi-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Dépendances Python
-COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r /app/backend/requirements.txt
+# Installer Poetry
+ENV POETRY_HOME="/opt/poetry" \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    OMISTOCK_ROOT=/app \
+    PORT=8000
+RUN curl -sSL https://install.python-poetry.org | python3 - \
+    && ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
 
-# Code source (backend + frontend + racine projet)
+# Copier d'abord les fichiers de dépendances Poetry (cache Docker)
+COPY pyproject.toml poetry.lock* /app/
+
+# Installer les dépendances du projet
+RUN poetry install --no-root
+
+# Copier tout le code (backend, frontend et base SQLite si présente)
 COPY . /app
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    OMISTOCK_ROOT=/app
+# On lance depuis /app/backend pour respecter "uvicorn main:app ..."
+WORKDIR /app/backend
 
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Render injecte $PORT dynamiquement
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
