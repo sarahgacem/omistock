@@ -1,43 +1,26 @@
-# OMISTOCK — Dockerfile Render (Poetry auto-detect + fallback requirements)
+# OMISTOCK — Dockerfile simple et fixe pour Render
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Dépendances système utiles à cryptography/bcrypt/Pillow
+# Dépendances système nécessaires à certaines libs Python
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libffi-dev curl \
+    && apt-get install -y --no-install-recommends gcc libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Installer Poetry
-ENV POETRY_HOME="/opt/poetry" \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    OMISTOCK_ROOT=/app \
-    PORT=8000
-RUN curl -sSL https://install.python-poetry.org | python3 - \
-    && ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
+    OMISTOCK_ROOT=/app
 
-# Copier tout le code (backend, frontend et base SQLite si présente)
+# Chemin FIXE des dépendances
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /app/backend/requirements.txt
+
+# Copier tout le code
 COPY . /app
-
-# Installer les dépendances :
-# 1) Poetry root (/app)
-# 2) Poetry backend (/app/backend)
-# 3) Fallback requirements backend
-RUN if [ -f "/app/pyproject.toml" ]; then \
-      poetry install --no-root; \
-    elif [ -f "/app/backend/pyproject.toml" ]; then \
-      cd /app/backend && poetry install --no-root; \
-    elif [ -f "/app/backend/requirements.txt" ]; then \
-      pip install --no-cache-dir --upgrade pip && \
-      pip install --no-cache-dir -r /app/backend/requirements.txt; \
-    else \
-      echo "ERREUR: Aucun fichier de dépendances trouvé (pyproject.toml / requirements.txt)." && exit 1; \
-    fi
 
 EXPOSE 8000
 
-# Render injecte $PORT dynamiquement
+# Render injecte $PORT
 CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT}"]
