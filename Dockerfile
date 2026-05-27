@@ -1,4 +1,4 @@
-# OMISTOCK — Dockerfile Render (Poetry + SQLite)
+# OMISTOCK — Dockerfile Render (Poetry auto-detect + fallback requirements)
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -19,19 +19,25 @@ ENV POETRY_HOME="/opt/poetry" \
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
 
-# Copier d'abord les fichiers de dépendances Poetry (cache Docker)
-COPY pyproject.toml poetry.lock* /app/
-
-# Installer les dépendances du projet
-RUN poetry install --no-root
-
 # Copier tout le code (backend, frontend et base SQLite si présente)
 COPY . /app
 
-# On lance depuis /app/backend pour respecter "uvicorn main:app ..."
-WORKDIR /app/backend
+# Installer les dépendances :
+# 1) Poetry root (/app)
+# 2) Poetry backend (/app/backend)
+# 3) Fallback requirements backend
+RUN if [ -f "/app/pyproject.toml" ]; then \
+      poetry install --no-root; \
+    elif [ -f "/app/backend/pyproject.toml" ]; then \
+      cd /app/backend && poetry install --no-root; \
+    elif [ -f "/app/backend/requirements.txt" ]; then \
+      pip install --no-cache-dir --upgrade pip && \
+      pip install --no-cache-dir -r /app/backend/requirements.txt; \
+    else \
+      echo "ERREUR: Aucun fichier de dépendances trouvé (pyproject.toml / requirements.txt)." && exit 1; \
+    fi
 
 EXPOSE 8000
 
 # Render injecte $PORT dynamiquement
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT}"]
