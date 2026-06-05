@@ -22,5 +22,5 @@ COPY . /app
 
 EXPOSE 8000
 
-# Render injecte $PORT
-CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT}"]
+# Render injecte $PORT (on met 8000 en valeur par défaut si absent pour éviter un crash)
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
