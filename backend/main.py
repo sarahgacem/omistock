@@ -18,22 +18,26 @@ from database import engine
 models.Base.metadata.create_all(bind=engine)
 
 def run_db_migrations():
-    from sqlalchemy import text
-    with engine.connect() as conn:
-        for col in ["commercial_register_number", "activity_sector", "nif", "address", "email", "phone"]:
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            for col in ["commercial_register_number", "activity_sector", "nif", "address", "email", "phone"]:
+                try:
+                    conn.execute(text(f"ALTER TABLE companies ADD COLUMN {col} VARCHAR"))
+                except Exception:
+                    pass
             try:
-                conn.execute(text(f"ALTER TABLE companies ADD COLUMN {col} VARCHAR"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"))
             except Exception:
                 pass
-        try:
-            conn.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"))
-        except Exception:
-            pass
-        try:
-            conn.execute(text("ALTER TABLE users ADD COLUMN deletion_deadline DATETIME"))
-        except Exception:
-            pass
-        conn.commit()
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN deletion_deadline DATETIME"))
+            except Exception:
+                pass
+            conn.commit()
+        print("[MIGRATIONS] DB migrations applied successfully.")
+    except Exception as e:
+        print(f"[MIGRATIONS] Warning: {e}")
 
 run_db_migrations()
 
@@ -106,6 +110,11 @@ else:
 @app.get("/")
 def read_root():
     return {"status": "online", "message": "OMISTOCK Backend API is running"}
+
+@app.get("/health")
+def health_check():
+    """Endpoint de santé pour Render health checks"""
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
