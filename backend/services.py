@@ -144,7 +144,15 @@ def create_user_service(db: Session, data: schemas.UserSignUp) -> Dict[str, str]
         raise Exception("Cet email est déjà utilisé.")
     
     import security
-    new_company = models.Company(name=data.company_name)
+    new_company = models.Company(
+        name=data.company_name,
+        commercial_register_number=data.commercial_register_number,
+        activity_sector=data.activity_sector,
+        nif=data.nif,
+        address=data.address,
+        email=data.company_email or data.email,
+        phone=data.company_phone
+    )
     db.add(new_company)
     db.commit()
     db.refresh(new_company)
@@ -158,7 +166,8 @@ def create_user_service(db: Session, data: schemas.UserSignUp) -> Dict[str, str]
         email=data.email, 
         hashed_password=hashed_password, 
         company_id=new_company.id,
-        branch_id=b1.id 
+        branch_id=b1.id,
+        user_type="ADMIN" # The creator is always the Admin
     )
     db.add(new_user)
     db.commit()
@@ -167,8 +176,41 @@ def create_user_service(db: Session, data: schemas.UserSignUp) -> Dict[str, str]
 
 def authenticate_user(db: Session, form_data: Any) -> Dict[str, str]:
     import security
+    from sqlalchemy import text
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if not user or not security.verify_password(form_data.password, user.hashed_password):
         raise Exception("Identifiants incorrects")
+        
+    # Check Instagram-style deactivation / deletion deadline
+    if hasattr(user, "deletion_deadline") and user.deletion_deadline is not None:
+        if datetime.now() > user.deletion_deadline:
+            # Deadline passed -> permanently purge the user and their company data
+            db.execute(text("PRAGMA foreign_keys = OFF"))
+            company_users_count = db.query(models.User).filter(models.User.company_id == user.company_id).count()
+            if company_users_count <= 1:
+                db.query(models.AuditLog).filter(models.AuditLog.company_id == user.company_id).delete()
+                db.query(models.ActivityLog).filter(models.ActivityLog.company_id == user.company_id).delete()
+                db.query(models.StockMovement).filter(models.StockMovement.company_id == user.company_id).delete()
+                db.query(models.SaleItem).join(models.Sale).filter(models.Sale.company_id == user.company_id).delete()
+                db.query(models.Sale).filter(models.Sale.company_id == user.company_id).delete()
+                db.query(models.TransferRequest).filter(models.TransferRequest.company_id == user.company_id).delete()
+                db.query(models.PurchaseOrderItem).join(models.PurchaseOrder).filter(models.PurchaseOrder.company_id == user.company_id).delete()
+                db.query(models.PurchaseOrder).filter(models.PurchaseOrder.company_id == user.company_id).delete()
+                db.query(models.Customer).filter(models.Customer.company_id == user.company_id).delete()
+                db.query(models.Inventory).join(models.Branch).filter(models.Branch.company_id == user.company_id).delete()
+                db.query(models.Product).filter(models.Product.company_id == user.company_id).delete()
+                db.query(models.Supplier).filter(models.Supplier.company_id == user.company_id).delete()
+                db.query(models.Branch).filter(models.Branch.company_id == user.company_id).delete()
+                db.query(models.Company).filter(models.Company.id == user.company_id).delete()
+            db.delete(user)
+            db.commit()
+            db.execute(text("PRAGMA foreign_keys = ON"))
+            raise Exception("Ce compte a été définitivement supprimé (délai de 30 jours dépassé).")
+        else:
+            # Reactivate account
+            user.is_active = True
+            user.deletion_deadline = None
+            db.commit()
+            
     access_token = security.create_access_token(data={"sub": user.email, "company_id": user.company_id})
     return {"access_token": access_token, "token_type": "bearer"}

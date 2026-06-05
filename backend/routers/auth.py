@@ -10,7 +10,7 @@ import schemas
 import models
 import services
 import security
-from dependencies import get_current_user, oauth2_scheme
+from dependencies import get_current_user, oauth2_scheme, get_current_agent_human
 from database import get_db
 
 router = APIRouter()
@@ -48,6 +48,8 @@ async def login(
 
 
 @router.post("/api/signup")
+@router.post("/register/enterprise")
+@router.post("/api/register/enterprise")
 def signup(data: schemas.UserSignUp, db: Session = Depends(get_db)):
     try:
         return services.create_user_service(db, data)
@@ -58,12 +60,9 @@ def signup(data: schemas.UserSignUp, db: Session = Depends(get_db)):
 @router.post("/api/agents", response_model=schemas.AgentAccessResponse)
 def create_agent_route(
     data: schemas.AgentAccessCreate,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_agent_human),
     db: Session = Depends(get_db),
 ):
-    if current_user.user_type not in ("ADMIN", "HUMAIN"):
-        raise HTTPException(status_code=403, detail="Seuls les humains peuvent créer des agents")
-
     api_key = secrets.token_urlsafe(32)
     email = f"agent_{secrets.token_hex(4)}@agent.local"
 
@@ -84,7 +83,7 @@ def create_agent_route(
 
 @router.get("/api/agents", response_model=List[schemas.AgentAccessResponse])
 def get_agents_route(
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_agent_human),
     db: Session = Depends(get_db),
 ):
     agents = repository.get_agents(db, current_user.company_id)
@@ -97,7 +96,7 @@ def get_agents_route(
 @router.get("/api/auth/qr-code")
 def generate_qr_code(
     token: str = Depends(oauth2_scheme),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_agent_human),
 ):
     import qrcode
     import io

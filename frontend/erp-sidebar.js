@@ -2,6 +2,23 @@
  * OMISTOCK ERP — Menu latéral mobile (partagé par toutes les pages dashboard)
  */
 (function () {
+    // Intercept all fetch requests globally to add the ngrok bypass header
+    const originalFetch = window.fetch;
+    window.fetch = function(input, init) {
+        init = init || {};
+        init.headers = init.headers || {};
+        
+        if (init.headers instanceof Headers) {
+            init.headers.set('ngrok-skip-browser-warning', '1');
+        } else if (Array.isArray(init.headers)) {
+            init.headers.push(['ngrok-skip-browser-warning', '1']);
+        } else {
+            init.headers['ngrok-skip-browser-warning'] = '1';
+        }
+        
+        return originalFetch(input, init);
+    };
+
     const MOBILE_BREAKPOINT = 1024;
 
     function toggleMobileMenu() {

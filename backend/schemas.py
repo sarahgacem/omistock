@@ -230,10 +230,37 @@ class AgentAccessResponse(BaseModel):
     user_type: str
 
 
+class CompanyResponse(BaseModel):
+    id: int
+    name: str
+    commercial_register_number: Optional[str] = None
+    activity_sector: Optional[str] = None
+    nif: Optional[str] = None
+    address: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    commercial_register_number: Optional[str] = None
+    activity_sector: Optional[str] = None
+    nif: Optional[str] = None
+    address: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
 class UserSignUp(BaseModel):
     email: EmailStr
     password: str
     company_name: str
+    commercial_register_number: Optional[str] = None
+    activity_sector: Optional[str] = None
+    nif: Optional[str] = None
+    address: Optional[str] = None
+    company_email: Optional[str] = None
+    company_phone: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
@@ -242,6 +269,17 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     company_id: Optional[int] = None
+
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    user_type: str
+    branch_id: Optional[int] = None
+    company_id: int
+    is_active: bool
+    deletion_deadline: Optional[datetime] = None
+    class Config:
+        from_attributes = True
 
 # --- SCANNER MOBILE ---
 class ScanAddRequest(BaseModel):

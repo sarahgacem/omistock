@@ -279,4 +279,57 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 
 ---
 
-*Document généré à l’issue du refactoring OMISTOCK — Étapes 1 à 8.*
+
+
+---
+
+## Etape 9 - Inscription Entreprise & Schema DB
+
+### Nouveau modele Company (models.py)
+- commercial_register_number, activity_sector, nif, address, email, phone
+- Migration automatique au demarrage via run_db_migrations() dans main.py
+
+### Nouveau modele User (models.py)
+- is_active (Boolean, default=True)
+- deletion_deadline (DateTime, nullable)
+
+### Frontend signup.html
+- Champs RC, NIF, Secteur, Telephone, Adresse ajoutes
+- API : POST /register/enterprise
+
+---
+
+## Etape 10 - RBAC (Role-Based Access Control)
+
+dependencies.py - 3 niveaux:
+- get_current_admin : ADMIN uniquement (Backup, Restore, Clean, Seed)
+- get_current_agent_human : ADMIN + HUMAIN (Agents, Transferts)
+- get_current_agent_ai : ADMIN + HUMAIN + AGENT (MCP)
+- get_current_user bloque les comptes inactifs (is_active=False)
+
+---
+
+## Etape 11 - Soft-Delete & Purge
+
+- Desactivation : is_active=False, deletion_deadline=now+30j
+- Reconnexion avant 30j : reactivation automatique
+- Reconnexion apres 30j : purge en cascade + erreur 401
+
+---
+
+## Etape 12 - Backup & Restore
+
+- GET /api/admin/backup : zip SQLite
+- POST /api/admin/restore : JSON (reinsertion), SQL (executescript), DB (ecrasement)
+
+---
+
+## Etape 13 - Informations Entreprise
+
+- GET /api/company : lecture
+- PUT /api/company : mise a jour (Admin)
+- settings.html charge et sauvegarde les donnees via API (plus de donnees statiques)
+
+---
+
+*Document mis a jour - Etapes 1 a 13 - Soutenance OMISTOCK ERP.*

@@ -336,12 +336,23 @@
         let currentProduct = null;
         let currentBranchName = null;
 
+        // Safe Token Storage with in-memory fallback (Telegram/WhatsApp webviews)
+        const TokenStorage = {
+            _mem: null,
+            get() { try { return localStorage.getItem('omistock_token') || this._mem; } catch(e) { return this._mem; } },
+            set(v) { this._mem = v; try { localStorage.setItem('omistock_token', v); } catch(e) {} },
+            clear() { this._mem = null; try { localStorage.removeItem('omistock_token'); } catch(e) {} }
+        };
+
+        // Ngrok bypass headers (prevents warning page intercepting API calls)
+        const NGROK_HEADERS = { 'ngrok-skip-browser-warning': '1' };
+
         // Initialize Feather Icons
         feather.replace();
 
         // --- Init ---
         window.onload = () => {
-            const token = localStorage.getItem('omistock_token');
+            const token = TokenStorage.get();
             if (token) {
                 initApp();
             } else {
@@ -394,13 +405,15 @@
                 
                 const res = await fetch(`${API_BASE}/api/token`, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: { ...NGROK_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: form 
                 });
                 if(res.ok) {
                     const data = await res.json();
-                    localStorage.setItem('omistock_token', data.access_token);
-                    window.location.reload();
+                    TokenStorage.set(data.access_token);
+                    // No reload — direct transition (avoids WebView localStorage wipe)
+                    document.getElementById('login-screen').classList.add('hidden');
+                    await initApp();
                 } else {
                     showToast("Identifiants incorrects", "error");
                     btn.innerHTML = originalHTML;
@@ -414,7 +427,8 @@
         }
 
         function logout() {
-            localStorage.clear();
+            TokenStorage.clear();
+            try { localStorage.clear(); } catch(e) {}
             allProducts = [];
             currentProduct = null;
             if (productQrCode) {
@@ -423,7 +437,6 @@
             }
             document.getElementById('main-app').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
-            window.location.href = window.location.pathname; // Hard refresh
         }
 
         // --- MAIN APP INIT ---
@@ -437,9 +450,13 @@
         async function loadUserData() {
             try {
                 const res = await fetch(`${API_BASE}/api/me`, {
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('omistock_token') }
+                    headers: { ...NGROK_HEADERS, 'Authorization': 'Bearer ' + TokenStorage.get() }
                 });
-                if (!res.ok) throw new Error("Invalid token");
+                if (!res.ok) {
+                    // Don't logout aggressively — could be a network blip
+                    showToast("Session expirée, reconnectez-vous.", "error");
+                    return;
+                }
                 const user = await res.json();
                 
                 currentBranchName = user.branch_name;
@@ -458,16 +475,16 @@
                 document.getElementById('profile-initials').innerText = initial;
                 
             } catch (e) {
-                logout();
+                console.warn('loadUserData error (network?):', e);
             }
         }
 
         async function loadData() {
             try {
-                const token = localStorage.getItem('omistock_token');
+                const token = TokenStorage.get();
                 const [invRes, statsRes] = await Promise.all([
-                    fetch(`${API_BASE}/api/inventory`, { headers: { 'Authorization': 'Bearer ' + token } }),
-                    fetch(`${API_BASE}/api/dashboard/stats`, { headers: { 'Authorization': 'Bearer ' + token } })
+                    fetch(`${API_BASE}/api/inventory`, { headers: { ...NGROK_HEADERS, 'Authorization': 'Bearer ' + token } }),
+                    fetch(`${API_BASE}/api/dashboard/stats`, { headers: { ...NGROK_HEADERS, 'Authorization': 'Bearer ' + token } })
                 ]);
 
                 if (invRes.ok) {
@@ -761,7 +778,7 @@
             try {
                 const res = await fetch(`${API_BASE}/api/products/${currentProduct.id}`, {
                     method: 'PUT',
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('omistock_token'), 'Content-Type': 'application/json' },
+                    headers: { ...NGROK_HEADERS, 'Authorization': 'Bearer ' + TokenStorage.get(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name: currentProduct.name,
                         sku: currentProduct.sku,
@@ -811,7 +828,7 @@
                     renderStockList(allProducts);
                     
                     // Reload stats to update alerts immediately in background
-                    fetch(`${API_BASE}/api/dashboard/stats`, { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('omistock_token') } })
+                    fetch(`${API_BASE}/api/dashboard/stats`, { headers: { ...NGROK_HEADERS, 'Authorization': 'Bearer ' + TokenStorage.get() } })
                         .then(r => r.json())
                         .then(d => renderAlerts(d.alerts || []));
                     
@@ -831,7 +848,7 @@
             try {
                 const res = await fetch(`${API_BASE}/api/products/${currentProduct.id}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('omistock_token') }
+                    headers: { ...NGROK_HEADERS, 'Authorization': 'Bearer ' + TokenStorage.get() }
                 });
 
                 if (res.ok) {

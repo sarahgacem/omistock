@@ -26,6 +26,40 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         user = db.query(models.User).filter(models.User.email == email).first()
         if user is None:
             raise credentials_exception
+            
+        # Freeze database access for deactivated accounts (Instagram style)
+        if hasattr(user, "is_active") and user.is_active == False:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Ce compte est actuellement désactivé."
+            )
+            
         return user
+    except HTTPException:
+        raise
     except Exception:
         raise credentials_exception
+
+def get_current_admin(current_user: models.User = Depends(get_current_user)):
+    if current_user.user_type != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs."
+        )
+    return current_user
+
+def get_current_agent_human(current_user: models.User = Depends(get_current_user)):
+    if current_user.user_type not in ("ADMIN", "HUMAIN"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux agents humains."
+        )
+    return current_user
+
+def get_current_agent_ai(current_user: models.User = Depends(get_current_user)):
+    if current_user.user_type != "AGENT":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux agents IA."
+        )
+    return current_user

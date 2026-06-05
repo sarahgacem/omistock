@@ -82,6 +82,7 @@
             try {
                 const res = await fetch(`${API_BASE}/token`, {
                     method: 'POST',
+                    headers: { 'ngrok-skip-browser-warning': '1' },
                     body: formData
                 });
 

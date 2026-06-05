@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum, CheckConstraint
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum, CheckConstraint, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -15,6 +15,12 @@ class Company(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    commercial_register_number = Column(String, nullable=True) # Numéro de registre (RC)
+    activity_sector = Column(String, nullable=True) # Secteur d'activité
+    nif = Column(String, nullable=True) # NIF
+    address = Column(String, nullable=True) # Adresse
+    email = Column(String, nullable=True) # Email de l'entreprise
+    phone = Column(String, nullable=True) # Téléphone
     
     branches = relationship("Branch", back_populates="company")
     products = relationship("Product", back_populates="company")
@@ -36,10 +42,12 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String, nullable=True)
-    user_type = Column(String, default="HUMAIN") # 'HUMAIN' ou 'AGENT'
+    user_type = Column(String, default="HUMAIN") # 'HUMAIN' ou 'AGENT' ou 'ADMIN'
     api_key = Column(String, unique=True, nullable=True)
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), index=True)
+    is_active = Column(Boolean, default=True) # Désactivation temporaire / suppression Instagram style
+    deletion_deadline = Column(DateTime(timezone=True), nullable=True) # Deadline de suppression définitive (30 jours)
     
     branch = relationship("Branch", back_populates="users")
     company = relationship("Company")

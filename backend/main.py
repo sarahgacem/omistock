@@ -17,6 +17,26 @@ from database import engine
 # Initialisation DB
 models.Base.metadata.create_all(bind=engine)
 
+def run_db_migrations():
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        for col in ["commercial_register_number", "activity_sector", "nif", "address", "email", "phone"]:
+            try:
+                conn.execute(text(f"ALTER TABLE companies ADD COLUMN {col} VARCHAR"))
+            except Exception:
+                pass
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"))
+        except Exception:
+            pass
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN deletion_deadline DATETIME"))
+        except Exception:
+            pass
+        conn.commit()
+
+run_db_migrations()
+
 def auto_seed_if_empty():
     db = database.SessionLocal()
     try:

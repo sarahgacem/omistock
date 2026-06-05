@@ -5,7 +5,7 @@ from typing import List
 from backend import repository
 import models
 import schemas
-from dependencies import get_current_user
+from dependencies import get_current_user, get_current_agent_human
 from database import get_db
 from services import log_audit
 
@@ -54,7 +54,7 @@ def request_transfer(
 @router.post("/api/transfer/{req_id}/approve")
 def approve_transfer(
     req_id: int,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_agent_human),
     db: Session = Depends(get_db),
 ):
     try:
@@ -82,7 +82,7 @@ def approve_transfer(
 @router.post("/api/transfer/{req_id}/confirm")
 def confirm_transfer(
     req_id: int,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_agent_human),
     db: Session = Depends(get_db),
 ):
     try:
