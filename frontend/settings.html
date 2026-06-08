@@ -431,6 +431,8 @@
     </main>
 
     <script>
+        const API_BASE = window.location.origin;
+
         async function init() {
             const token = localStorage.getItem('omistock_token');
             if (!token) { window.location.href = 'index.html'; return; }
@@ -455,7 +457,7 @@
             
             // Enrich details via profile call
             try {
-                const meRes = await fetch(`/api/me`, {
+                const meRes = await fetch(`${API_BASE}/api/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (meRes.ok) {
@@ -477,7 +479,7 @@
 
             // Récupération dynamique de l'entreprise (Multi-Tenant) depuis la DB
             try {
-                const companyRes = await fetch(`/api/company`, {
+                const companyRes = await fetch(`${API_BASE}/api/company`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (companyRes.ok) {
@@ -518,7 +520,7 @@
             btn.classList.add('opacity-75');
 
             try {
-                const response = await fetch('/api/company', {
+                const response = await fetch(`${API_BASE}/api/company`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -565,7 +567,7 @@
         async function loadAgents() {
             const token = localStorage.getItem('omistock_token');
             try {
-                const response = await fetch('/api/agents', {
+                const response = await fetch(`${API_BASE}/api/agents`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -600,7 +602,7 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch('/api/agents', {
+                const response = await fetch(`${API_BASE}/api/agents`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -635,7 +637,7 @@
             }
 
             try {
-                const response = await fetch('/api/admin/backup', {
+                const response = await fetch(`${API_BASE}/api/admin/backup`, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
 
@@ -684,7 +686,7 @@
             }
 
             try {
-                const response = await fetch(`/api/admin/${actionType}`, {
+                const response = await fetch(`${API_BASE}/api/admin/${actionType}`, {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
@@ -714,7 +716,7 @@
             formData.append('file', file);
             
             try {
-                const response = await fetch('/api/admin/restore', {
+                const response = await fetch(`${API_BASE}/api/admin/restore`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
@@ -737,7 +739,7 @@
         async function loadCompanyUsers() {
             const token = localStorage.getItem('omistock_token');
             try {
-                const response = await fetch('/api/admin/users', {
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -778,7 +780,7 @@
             }
             const token = localStorage.getItem('omistock_token');
             try {
-                const response = await fetch(`/api/admin/users/${userId}`, {
+                const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -800,7 +802,7 @@
             }
             const token = localStorage.getItem('omistock_token');
             try {
-                const response = await fetch('/api/admin/deactivate', {
+                const response = await fetch(`${API_BASE}/api/admin/deactivate`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -819,7 +821,7 @@
         async function loadBranchesForEmployeeForm() {
             const token = localStorage.getItem('omistock_token');
             try {
-                const response = await fetch('/api/branches', {
+                const response = await fetch(`${API_BASE}/api/branches`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -846,7 +848,7 @@
                 return;
             }
 
-            const endpoint = userType === 'branch-admin' ? '/api/admin/users/branch-admin' : '/api/admin/users/employee';
+            const endpoint = userType === 'branch-admin' ? `${API_BASE}/api/admin/users/branch-admin` : `${API_BASE}/api/admin/users/employee`;
 
             try {
                 const response = await fetch(endpoint, {

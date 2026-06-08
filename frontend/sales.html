@@ -405,6 +405,12 @@
             }
         }
 
+        function logout() {
+            localStorage.removeItem('omistock_token');
+            localStorage.removeItem('omistock_user');
+            window.location.href = 'index.html';
+        }
+
         window.onload = init;
     
     </script>
