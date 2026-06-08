@@ -840,11 +840,11 @@
             const token = localStorage.getItem('omistock_token');
             const email = document.getElementById('user_email').value.trim();
             const password = document.getElementById('user_password').value;
-            const branchId = parseInt(document.getElementById('user_branch').value);
+            const branchId = document.getElementById('user_branch').value;
             const userType = document.getElementById('user_type').value;
 
             if (!email || !password || !branchId || !userType) {
-                alert("Veuillez remplir tous les champs.");
+                alert("Veuillez remplir tous les champs, y compris la filiale.");
                 return;
             }
 
@@ -860,19 +860,20 @@
                     body: JSON.stringify({
                         email: email,
                         password: password,
-                        branch_id: branchId
+                        branch_id: parseInt(branchId)
                     })
                 });
 
                 if (response.ok) {
                     alert("Utilisateur créé avec succès !");
                     document.getElementById('add_user_form').reset();
-                    loadCompanyUsers();
+                    await loadCompanyUsers();
                 } else {
                     const err = await response.json();
                     alert("Erreur: " + (err.detail || "Opération échouée"));
                 }
             } catch (e) {
+                console.error("Erreur de création d'utilisateur:", e);
                 alert("Erreur de connexion.");
             }
         }

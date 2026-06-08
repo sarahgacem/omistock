@@ -252,7 +252,7 @@
                     <td class="py-4 px-6 text-sm text-slate-600">${branchMap[s.branch_id] || 'N/A'}</td>
                     <td class="py-4 px-6 text-sm font-bold text-teal-600">${s.total_amount} DA</td>
                     <td class="py-4 px-6 text-right space-x-2">
-                        <button onclick="window.open(\`${API_BASE}/api/sales/${s.id}/invoice/html\`, '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
+                        <button onclick="openInvoice(${s.id})" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
                             <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         </button>
                     </td>
@@ -413,6 +413,40 @@
             localStorage.removeItem('omistock_token');
             localStorage.removeItem('omistock_user');
             window.location.href = 'index.html';
+        }
+
+        async function openInvoice(saleId) {
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch(`${API_BASE}/api/sales/${saleId}/invoice/html`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.status === 401 || response.status === 403) {
+                    alert("Session expirée. Veuillez vous reconnecter.");
+                    logout();
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
+                const html = await response.text();
+                
+                // Open new window and inject HTML
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(html);
+                newWindow.document.close();
+                
+                // Trigger print after a short delay
+                setTimeout(() => {
+                    newWindow.print();
+                }, 500);
+            } catch (error) {
+                console.error("Erreur de chargement de la facture:", error);
+                alert("Erreur de chargement de la facture");
+            }
         }
 
         window.onload = init;
