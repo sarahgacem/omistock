@@ -214,3 +214,46 @@ def authenticate_user(db: Session, form_data: Any) -> Dict[str, str]:
             
     access_token = security.create_access_token(data={"sub": user.email, "company_id": user.company_id})
     return {"access_token": access_token, "token_type": "bearer"}
+
+def create_branch_user(db: Session, user_data: schemas.BranchUserCreate, company_id: int, role: str) -> models.User:
+    import security
+    
+    # Vérifier que l'email n'existe pas déjà
+    existing_user = db.query(models.User).filter(models.User.email == user_data.email).first()
+    if existing_user:
+        raise Exception("Cet email est déjà utilisé.")
+    
+    # Vérifier que la filiale appartient à l'entreprise
+    branch = db.query(models.Branch).filter(
+        models.Branch.id == user_data.branch_id,
+        models.Branch.company_id == company_id
+    ).first()
+    if not branch:
+        raise Exception("Filiale invalide ou n'appartient pas à votre entreprise.")
+    
+    # Si rôle ADMIN, vérifier qu'il n'y a pas déjà un admin dans cette filiale
+    if role == "ADMIN":
+        existing_admin = db.query(models.User).filter(
+            models.User.branch_id == user_data.branch_id,
+            models.User.user_type == "ADMIN",
+            models.User.company_id == company_id
+        ).first()
+        if existing_admin:
+            raise Exception("Cette filiale possède déjà un administrateur.")
+    
+    # Hasher le mot de passe
+    hashed_password = security.get_password_hash(user_data.password)
+    
+    # Créer l'utilisateur avec rôle forcé
+    new_user = models.User(
+        email=user_data.email,
+        hashed_password=hashed_password,
+        user_type=role,
+        branch_id=user_data.branch_id,
+        company_id=company_id,
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user

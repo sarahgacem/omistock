@@ -253,6 +253,60 @@ def delete_company_user(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/api/admin/users/employee", response_model=schemas.UserResponse)
+def create_employee(
+    employee_data: schemas.EmployeeCreate,
+    current_user: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    from backend.security import get_password_hash
+    
+    # Vérifier que l'email n'existe pas déjà
+    existing_user = db.query(models.User).filter(models.User.email == employee_data.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé.")
+    
+    # Vérifier que la filiale appartient à l'entreprise
+    branch = db.query(models.Branch).filter(
+        models.Branch.id == employee_data.branch_id,
+        models.Branch.company_id == current_user.company_id
+    ).first()
+    if not branch:
+        raise HTTPException(status_code=400, detail="Filiale invalide ou n'appartient pas à votre entreprise.")
+    
+    try:
+        # Créer l'employé avec rôle forcé à HUMAIN
+        hashed_password = get_password_hash(employee_data.password)
+        new_employee = models.User(
+            email=employee_data.email,
+            hashed_password=hashed_password,
+            user_type="HUMAIN",
+            branch_id=employee_data.branch_id,
+            company_id=current_user.company_id,
+            is_active=True
+        )
+        db.add(new_employee)
+        db.commit()
+        db.refresh(new_employee)
+        return new_employee
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/admin/users/branch-admin", response_model=schemas.UserResponse)
+def create_branch_admin(
+    admin_data: schemas.BranchUserCreate,
+    current_user: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    try:
+        new_admin = services.create_branch_user(db, admin_data, current_user.company_id, "ADMIN")
+        return new_admin
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/api/company", response_model=schemas.CompanyResponse)
 def get_company(
     current_user: models.User = Depends(get_current_user),

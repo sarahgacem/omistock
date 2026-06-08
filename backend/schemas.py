@@ -221,6 +221,16 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class EmployeeCreate(BaseModel):
+    email: EmailStr
+    password: str
+    branch_id: int
+
+class BranchUserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    branch_id: int
+
 class AgentAccessCreate(BaseModel):
     name: str
 
