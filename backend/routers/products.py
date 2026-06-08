@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import secrets
@@ -222,7 +223,7 @@ def get_invoice_html(
     
     company = db.query(models.Company).filter(models.Company.id == current_user.company_id).first()
     branch = db.query(models.Branch).filter(models.Branch.id == sale.branch_id).first()
-    user = db.query(models.User).filter(models.User.id == sale.user_id).first()
+    user = current_user  # Use current_user instead of sale.user_id
     
     items = db.query(models.SaleItem).filter(models.SaleItem.sale_id == sale_id).all()
     
@@ -255,7 +256,7 @@ def get_invoice_html(
         <div class="info-row">
             <div>
                 <div class="info-label">Date:</div>
-                <div>{sale.created_at.strftime('%d/%m/%Y %H:%M')}</div>
+                <div>{sale.date.strftime('%d/%m/%Y %H:%M') if sale.date else 'N/A'}</div>
             </div>
             <div>
                 <div class="info-label">Filiale:</div>
@@ -293,7 +294,7 @@ def get_invoice_html(
                     <td>{product.name if product else 'N/A'}</td>
                     <td>{item.quantity}</td>
                     <td>{item.unit_price} DA</td>
-                    <td>{item.total} DA</td>
+                    <td>{item.quantity * item.unit_price} DA</td>
                 </tr>
         """
     
@@ -305,7 +306,7 @@ def get_invoice_html(
         
         <div class="footer">
             <p>Document généré automatiquement par OMISTOCK</p>
-            <p>Date d'émission: {sale.created_at.strftime('%d/%m/%Y %H:%M')}</p>
+            <p>Date d'émission: {sale.date.strftime('%d/%m/%Y %H:%M') if sale.date else 'N/A'}</p>
         </div>
     </body>
     </html>
