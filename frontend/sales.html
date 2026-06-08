@@ -148,6 +148,7 @@
         let modalProducts = [];
 
         async function init() {
+            console.log("init() called");
             const token = localStorage.getItem('omistock_token');
             if (!token) { window.location.href = 'index.html'; return; }
             
@@ -178,15 +179,17 @@
                 console.error("Erreur de profil:", e);
             }
 
+            console.log("Starting to load sales...");
             try {
                 // We'll also need branches to resolve branch_id
                 const branchesRes = await fetch(`${API_BASE}/api/branches`, { headers: { 'Authorization': `Bearer ${token}` } });
                 
                 if (!branchesRes.ok) {
-                    throw new Error(`Erreur chargement branches: ${branchesRes.status}`);
+                    console.error("Erreur chargement branches:", branchesRes.status);
+                    // Continue with empty branch map if branches fail
                 }
                 
-                const branches = await branchesRes.json();
+                const branches = branchesRes.ok ? await branchesRes.json() : [];
                 const branchMap = {};
                 branches.forEach(b => branchMap[b.id] = b.name);
 
@@ -204,9 +207,10 @@
                 const salesCount = Array.isArray(sales) ? sales.length : 0;
                 document.getElementById('total_sales').textContent = `${salesCount} ventes enregistrées`;
                 renderTable(sales, branchMap);
+                console.log("Sales loaded successfully:", salesCount);
             } catch (error) {
                 console.error("Erreur de chargement:", error);
-                document.getElementById('total_sales').textContent = "Erreur de chargement";
+                document.getElementById('total_sales').textContent = "Erreur de chargement des ventes";
             }
         }
 
@@ -248,7 +252,7 @@
                     <td class="py-4 px-6 text-sm text-slate-600">${branchMap[s.branch_id] || 'N/A'}</td>
                     <td class="py-4 px-6 text-sm font-bold text-teal-600">${s.total_amount} DA</td>
                     <td class="py-4 px-6 text-right space-x-2">
-                        <button onclick="window.open(`${{API_BASE}}/api/sales/${{s.id}}/invoice/html`, '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
+                        <button onclick="window.open(\`${API_BASE}/api/sales/${s.id}/invoice/html\`, '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
                             <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         </button>
                     </td>
