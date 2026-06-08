@@ -7,66 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background-color: #f1f5f9; color: #1e293b; }
-        .sidebar { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
-        .nav-item { color: #94a3b8; transition: all 0.3s; }
-        .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
-        .nav-item.active { background: #2dd4bf; color: white; box-shadow: 0 10px 20px -5px rgba(45, 212, 191, 0.4); }
-        .card { background: white; border-radius: 30px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04); }
-        .status-badge { @apply px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest; }
-        .modal { transition: opacity 0.3s; }
-        .modal.hidden { display: none; }
-        
-        /* Premium Tooltip */
-        [data-tooltip] { position: relative; }
-        [data-tooltip]:before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 8px 12px;
-            background: #1e293b;
-            color: white;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            border-radius: 10px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-        [data-tooltip]:hover:before {
-            opacity: 1;
-            visibility: visible;
-            bottom: 140%;
-        }
-        [data-tooltip]:after {
-            content: '';
-            position: absolute;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px;
-            border-style: solid;
-            border-color: #1e293b transparent transparent transparent;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        [data-tooltip]:hover:after {
-            opacity: 1;
-            visibility: visible;
-            bottom: 125%;
-        }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex min-h-screen">
+<body class="light-theme flex min-h-screen">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/60 z-30"></div>
+
 
     <!-- Sidebar -->
     <aside class="sidebar w-72 flex flex-col p-8 text-white fixed h-full z-50">
@@ -88,7 +35,7 @@
             </a>
             <a href="sales.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span class="font-medium">Commandes</span>
+                <span class="font-medium">Ventes</span>
             </a>
             <a href="reports.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -98,27 +45,47 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 <span class="font-medium">Fournisseurs</span>
             </a>
+            <a href="logs.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="font-medium">Activity Logs</span>
+            </a>
+            <a href="settings.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="font-medium">Paramètres</span>
+            </a>
         </nav>
 
         <div class="mt-auto p-6 bg-white/5 rounded-3xl border border-white/10">
-            <p class="text-sm font-semibold truncate" id="user_email">...</p>
-            <button onclick="logout()" class="mt-4 text-rose-400 text-sm font-bold flex items-center gap-2">Déconnexion</button>
+            <p class="text-xs text-slate-400 mb-2 uppercase tracking-widest font-bold">Session Active</p>
+            <div class="flex items-center gap-2 mb-1">
+                <p class="text-sm font-semibold truncate" id="user_email">...</p>
+                <span id="user_role_badge" class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/30 uppercase">...</span>
+            </div>
+            <p class="text-[10px] text-slate-400 font-bold" id="user_branch_sidebar">...</p>
+            <div id="admin_maintenance" class="hidden"></div>
+            <button onclick="logout()" class="mt-6 w-full py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-rose-500/20">
+                <span>Déconnexion</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-72 p-12">
-        <header class="mb-12 flex justify-between items-end">
+    <main class="erp-main flex-1 ml-72 p-12">
+        <header class="mb-8 lg:mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-                <h1 class="text-5xl font-black text-slate-900 mb-2">Gestion du Stock</h1>
+                <div class="flex items-center gap-4 mb-2">
+                    <button type="button" id="menu-toggle" class="menu-toggle lg:hidden" aria-label="Ouvrir le menu"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                    <h1 class="text-3xl sm:text-5xl font-black text-slate-900">Gestion du Stock</h1>
+                </div>
                 <p class="text-slate-500 font-bold" id="product_count">Chargement...</p>
             </div>
             <button onclick="openModal('addModal')" class="bg-emerald-400 text-slate-900 px-6 py-3 rounded-2xl font-bold hover:bg-emerald-300 transition-all">+ Ajouter un produit</button>
         </header>
 
         <!-- Filters Row -->
-        <div class="flex items-center justify-between gap-6 mb-10">
-            <div class="flex items-center gap-4 flex-1">
+        <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 lg:gap-6 mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1">
                 <div class="relative flex-1">
                     <svg class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     <input type="text" id="searchInput" placeholder="Rechercher par nom ou SKU..." class="w-full bg-white border-none rounded-full py-5 pl-16 pr-8 shadow-sm outline-none font-medium focus:ring-2 focus:ring-emerald-400" oninput="applyFilters()">
@@ -139,7 +106,7 @@
                     <option value="Autre">Autre</option>
                 </select>
             </div>
-            <div class="flex bg-white rounded-full p-1.5 shadow-sm" id="stockFilterBtns">
+            <div class="flex overflow-x-auto bg-white rounded-full p-1.5 shadow-sm" id="stockFilterBtns">
                 <button onclick="setStockFilter('all', this)" class="active px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-400 text-white shadow-lg transition-all">Tous</button>
                 <button onclick="setStockFilter('faible', this)" class="px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Stock Faible</button>
                 <button onclick="setStockFilter('moyen', this)" class="px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Stock Moyen</button>
@@ -239,7 +206,7 @@
     </div>
 
     <script>
-        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8000";
+        const API_BASE = window.location.origin;
         let allProducts = [];
         let currentStockFilter = 'all';
 
@@ -247,13 +214,107 @@
             const token = localStorage.getItem('omistock_token');
             if (!token) { window.location.href = 'index.html'; return; }
             
-            const savedCompany = localStorage.getItem('omistock_company');
-            if (savedCompany) {
-                document.getElementById('company_name_sidebar').textContent = savedCompany.toUpperCase();
+            document.getElementById('user_email').textContent = localStorage.getItem('omistock_user') || 'Utilisateur';
+            document.getElementById('inventory_table').innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-400">Chargement de l'inventaire...</td></tr>`;
+            
+            // Enrich details via profile call
+            try {
+                const meRes = await fetch(`${API_BASE}/api/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (meRes.ok) {
+                    const currentUser = await meRes.json();
+                    document.getElementById('user_email').textContent = currentUser.email;
+                    document.getElementById('user_role_badge').textContent = currentUser.user_type || 'ADMIN';
+                    document.getElementById('user_branch_sidebar').textContent = currentUser.branch_name || 'Admin Central';
+                    
+                    if (currentUser.user_type === 'ADMIN') {
+                        document.getElementById('admin_maintenance').classList.remove('hidden');
+                    }
+                    
+                    // Différenciation dynamique par entreprise (Multi-Tenant)
+                    const isFood = currentUser.email.includes("food");
+                    const companyName = isFood ? "AGRO-INDUSTRIE DZ" : "OMISTOCK BUSINESS SOLUTIONS";
+                    document.getElementById('company_name_sidebar').textContent = companyName.toUpperCase();
+                }
+            } catch (e) {
+                console.error("Erreur de profil:", e);
             }
 
-            document.getElementById('user_email').textContent = localStorage.getItem('omistock_user') || 'Utilisateur';
             fetchProducts();
+        }
+
+        async function adminAction(actionType) {
+            const token = localStorage.getItem('omistock_token');
+            if (!token) return;
+
+            const confirmMsg = actionType === 'seed' 
+                ? "Initialiser la base de données avec les données de démonstration ?" 
+                : "ATTENTION : Nettoyer toutes les données ? (Historique, ventes, mouvements)";
+            if (!confirm(confirmMsg)) return;
+
+            if (actionType === 'clean') {
+                alert("Sauvegarde préventive automatique avant nettoyage...");
+                await backupDatabase();
+            }
+
+            try {
+                const response = await fetch(`/api/admin/${actionType}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const resData = await response.json();
+                alert(resData.message || "Opération réussie !");
+                window.location.reload();
+            } catch (e) {
+                alert("Erreur lors de l'opération");
+            }
+        }
+
+        async function backupDatabase(btnElement) {
+            const token = localStorage.getItem('omistock_token');
+            if (!token) return;
+            const btn = btnElement || document.querySelector("button[onclick*='backupDatabase']");
+            let originalHTML = "Sauvegarder la Base";
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = "...";
+            }
+
+            try {
+                const response = await fetch('/api/admin/backup', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) throw new Error("Backup failed");
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `omistock_backup.db`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                if (btn) {
+                    btn.classList.add('bg-emerald-600');
+                    btn.innerHTML = "Sauvegarde OK !";
+                    setTimeout(() => {
+                        btn.classList.remove('bg-emerald-600');
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } catch (e) {
+                alert("Erreur lors de la sauvegarde");
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            }
         }
 
         async function fetchProducts() {
@@ -267,6 +328,13 @@
 
             try {
                 const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('omistock_token');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
                 if(res.ok) {
                     allProducts = await res.json();
                     document.getElementById('product_count').textContent = `${allProducts.length} produits au total`;
@@ -316,7 +384,25 @@
             const tbody = document.getElementById('inventory_table');
             tbody.innerHTML = '';
             if(products.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-400">Aucun produit trouvé</td></tr>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="py-20 text-center">
+                            <div class="flex flex-col items-center justify-center max-w-md mx-auto">
+                                <div class="w-20 h-20 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center mb-6 text-slate-400 shadow-inner">
+                                    <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4M12 11h.01M12 12h.01M12 15h.01"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-slate-950 font-black text-lg mb-2">Votre inventaire est vide</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed mb-6">Il n'y a aucun produit enregistré pour le moment. Vous pouvez en ajouter un en cliquant sur le bouton ci-dessous ou en synchronisant depuis l'application mobile.</p>
+                                <button onclick="openModal('add_modal')" class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-sm shadow-emerald-200 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Ajouter un Produit
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
                 return;
             }
             products.forEach(p => {
@@ -446,6 +532,8 @@
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
         window.onload = init;
+    
     </script>
+    <script src="erp-sidebar.js"></script>
 </body>
 </html>

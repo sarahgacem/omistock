@@ -52,10 +52,14 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = None
     sku: Optional[str] = None
     barcode: Optional[str] = None
+    quantity: Optional[int] = None
     price: Optional[float] = None
     min_threshold: Optional[int] = None
     status: Optional[ProductStatus] = None
     supplier_id: Optional[int] = None
+
+class ProductAnalyzeRequest(BaseModel):
+    product_id: int
 
 class InventoryResponse(BaseModel):
     id: int
@@ -97,6 +101,27 @@ class TransferCreate(BaseModel):
     to_branch_id: int
     quantity: int
 
+class TransferRequestCreate(BaseModel):
+    product_id: int
+    from_branch_id: int
+    to_branch_id: int
+    quantity: int
+
+class TransferRequestResponse(BaseModel):
+    id: int
+    product_id: int
+    from_branch_id: int
+    to_branch_id: int
+    quantity: int
+    status: str
+    requester_id: int
+    approver_id: Optional[int] = None
+    created_at: datetime
+    product: ProductResponse
+    from_branch: BranchResponse
+    to_branch: BranchResponse
+    class Config:
+        from_attributes = True
 
 # --- BONS DE COMMANDE ---
 class PurchaseOrderCreate(BaseModel):
@@ -178,10 +203,81 @@ class ActivityLogResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class AuditLogResponse(BaseModel):
+    id: int
+    user_id: int
+    user_email: Optional[str] = None
+    user_type: Optional[str] = None
+    action: str
+    timestamp: datetime
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    company_id: int
+    class Config:
+        from_attributes = True
+
 # --- AUTHENTIFICATION ---
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+
+class EmployeeCreate(BaseModel):
+    email: EmailStr
+    password: str
+    branch_id: int
+
+class BranchUserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    branch_id: int
+
+class RestockCreate(BaseModel):
+    supplier_id: int
+    product_id: int
+    branch_id: int
+    quantity: int
+    purchase_price: Optional[float] = 0.0
+
+class AgentAccessCreate(BaseModel):
+    name: str
+
+class AgentAccessResponse(BaseModel):
+    email: str
+    api_key: str
+    user_type: str
+
+
+class CompanyResponse(BaseModel):
+    id: int
+    name: str
+    commercial_register_number: Optional[str] = None
+    activity_sector: Optional[str] = None
+    nif: Optional[str] = None
+    address: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    commercial_register_number: Optional[str] = None
+    activity_sector: Optional[str] = None
+    nif: Optional[str] = None
+    address: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+class UserSignUp(BaseModel):
+    email: EmailStr
+    password: str
+    company_name: str
+    commercial_register_number: Optional[str] = None
+    activity_sector: Optional[str] = None
+    nif: Optional[str] = None
+    address: Optional[str] = None
+    company_email: Optional[str] = None
+    company_phone: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
@@ -190,6 +286,17 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     company_id: Optional[int] = None
+
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    user_type: str
+    branch_id: Optional[int] = None
+    company_id: int
+    is_active: bool
+    deletion_deadline: Optional[datetime] = None
+    class Config:
+        from_attributes = True
 
 # --- SCANNER MOBILE ---
 class ScanAddRequest(BaseModel):

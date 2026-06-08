@@ -6,91 +6,79 @@
     <title>OMISTOCK - Paramètres</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background-color: #f4f7f9; color: #1e293b; }
-        
-        /* Sidebar OMISTOCK (Conservée pour la cohérence globale) */
-        .sidebar { background: #475569; }
-        .sidebar .active { background: #4fd1c5; color: white; border-radius: 12px; }
-        .sidebar .nav-item { color: #e2e8f0; transition: all 0.3s; padding: 12px 16px; border-radius: 12px; }
-        .sidebar .nav-item:hover:not(.active) { background: rgba(255,255,255,0.1); }
-        
-        /* Cartes Style Honestoc (depuis les maquettes) */
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03); border: 1px solid #f1f5f9; }
-        
-        /* Boutons personnalisés */
-        .btn-outline-blue { border: 1px solid #1e3a8a; color: #1e3a8a; border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; }
-        .btn-outline-blue:hover { background: #eff6ff; }
-        .btn-outline-red { border: 1px solid #e11d48; color: #e11d48; border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; }
-        .btn-outline-red:hover { background: #fff1f2; }
-        .btn-solid-blue { background: #174092; color: white; border-radius: 8px; padding: 10px 20px; font-weight: 600; transition: all 0.2s; }
-        .btn-solid-blue:hover { background: #1e3a8a; }
-
-        /* Inputs */
-        .input-field { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 0.875rem; color: #334155; transition: border-color 0.2s; }
-        .input-field:focus { outline: none; border-color: #174092; box-shadow: 0 0 0 3px rgba(23, 64, 146, 0.1); }
-        .input-label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: 500; }
-        
-        /* Toggle Switch */
-        .toggle-checkbox:checked { right: 0; border-color: #174092; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #174092; }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex min-h-screen">
+<body class="light-theme flex min-h-screen">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/60 z-30"></div>
+
 
     <!-- Sidebar (OMISTOCK) -->
-    <aside class="sidebar w-64 flex flex-col p-6 text-white fixed h-full z-50">
-        <div class="mb-10 flex items-center gap-3 bg-white p-3 rounded-xl">
-            <div class="w-8 h-8 flex items-center justify-center">
-                <svg class="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+    <aside class="sidebar w-72 flex flex-col p-8 text-white fixed h-full z-50">
+        <div class="mb-12 flex items-center gap-3">
+            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
             </div>
-            <h2 class="text-sm font-bold text-slate-800 tracking-tight truncate" id="company_name_sidebar">OMISTOCK</h2>
+            <h2 class="text-xl font-bold tracking-tight uppercase" id="company_name_sidebar">OMISTOCK</h2>
         </div>
 
-        <nav class="space-y-2 flex-1">
-            <a href="dashboard.html" class="nav-item flex items-center gap-3">
+        <nav class="space-y-3 flex-1">
+            <a href="dashboard.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                <span class="font-medium text-sm">Dashboard</span>
+                <span class="font-medium">Dashboard</span>
             </a>
-            <a href="inventory.html" class="nav-item flex items-center gap-3">
+            <a href="inventory.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                <span class="font-medium text-sm">Stock</span>
+                <span class="font-medium">Stock</span>
             </a>
-            <a href="sales.html" class="nav-item flex items-center gap-3">
+            <a href="sales.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span class="font-medium text-sm">Commandes</span>
+                <span class="font-medium">Ventes</span>
             </a>
-            <a href="suppliers.html" class="nav-item flex items-center gap-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span class="font-medium text-sm">Fournisseurs</span>
-            </a>
-            <a href="reports.html" class="nav-item flex items-center gap-3">
+            <a href="reports.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span class="font-medium text-sm">Rapports</span>
+                <span class="font-medium">Rapports</span>
             </a>
-            <a href="logs.html" class="nav-item flex items-center gap-3">
+            <a href="suppliers.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span class="font-medium">Fournisseurs</span>
+            </a>
+            <a href="logs.html" class="nav-item flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span class="font-medium text-sm">Activity Logs</span>
+                <span class="font-medium">Activity Logs</span>
             </a>
-            <a href="settings.html" class="nav-item active flex items-center gap-3">
+            <a href="settings.html" class="nav-item active flex items-center gap-4 p-4 rounded-2xl">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="font-medium text-sm">Paramètres</span>
+                <span class="font-medium">Paramètres</span>
             </a>
         </nav>
-        
-        <div class="mt-auto pt-4 border-t border-slate-500 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs" id="user_avatar">A</div>
-            <div class="flex-1 truncate">
-                <p class="text-xs font-semibold truncate" id="user_email_sidebar">...</p>
+
+        <div class="mt-auto p-6 bg-white/5 rounded-3xl border border-white/10">
+            <p class="text-xs text-slate-400 mb-2 uppercase tracking-widest font-bold">Session Active</p>
+            <div class="flex items-center gap-2 mb-1">
+                <p class="text-sm font-semibold truncate" id="user_email_sidebar">...</p>
+                <span id="user_role_badge" class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/30 uppercase">...</span>
             </div>
+            <p class="text-[10px] text-slate-400 font-bold" id="user_branch_sidebar">...</p>
+            
+
+
+            <button onclick="logout()" class="mt-6 w-full py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-rose-500/20">
+                <span>Déconnexion</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-64 flex flex-col">
+    <main class="erp-main flex-1 ml-72 flex flex-col">
         <!-- Top Bar -->
         <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-10 sticky top-0">
-            <h1 class="text-xl font-bold text-slate-800">Paramètres</h1>
+            <div class="flex items-center gap-4">
+                <button type="button" id="menu-toggle" class="menu-toggle lg:hidden" aria-label="Ouvrir le menu"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                <h1 class="text-xl font-bold text-slate-800">Paramètres</h1>
+            </div>
             <button class="text-slate-600 hover:text-slate-900 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
             </button>
@@ -293,12 +281,159 @@
                     </div>
                 </div>
 
+                <!-- Accès Agent (API Keys) -->
+                <div class="card p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-[#174092]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                        <h2 class="text-lg font-bold text-slate-800">Accès Agent (API Keys)</h2>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-4">Générez des clés API pour permettre à vos agents IA d'accéder au système OMISTOCK de manière sécurisée.</p>
+                    
+                    <div class="flex gap-2 mb-6">
+                        <input type="text" id="agent_name_input" class="input-field flex-1" placeholder="Nom de l'agent (ex: Agent Inventaire)">
+                        <button onclick="generateAgentKey()" class="btn-solid-blue whitespace-nowrap" id="btn_generate_key">Générer une clé</button>
+                    </div>
+
+                    <div id="agents_list" class="space-y-3">
+                        <!-- Liste des agents -->
+                        <p class="text-sm text-slate-400 italic">Chargement des agents...</p>
+                    </div>
+                </div>
+
+                <!-- Maintenance & Sauvegarde -->
+                <div id="admin_maintenance" class="card p-6 border-2 border-slate-100 hidden">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h2 class="text-lg font-bold text-slate-800">Maintenance & Sauvegarde</h2>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-6">Gérez l'intégrité de vos données, effectuez des copies de sécurité ou réinitialisez le système pour la démonstration.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Sauvegarde -->
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-700 mb-2">Sauvegarde complète</h3>
+                                <p class="text-xs text-slate-500 mb-4">Télécharge une copie complète de la base de données actuelle (.db).</p>
+                            </div>
+                            <button onclick="backupDatabase(this)" class="w-full btn-solid-blue flex items-center justify-center gap-2 text-xs">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Sauvegarder la Base
+                            </button>
+                        </div>
+                        <!-- Restauration -->
+                        <div class="p-4 bg-amber-50/50 rounded-xl border border-amber-100 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-amber-800 mb-2">Restauration</h3>
+                                <p class="text-xs text-amber-600 mb-4">Restaure la base depuis un fichier .json, .sql ou .db.</p>
+                            </div>
+                            <input type="file" id="restore_file_input" class="hidden" accept=".json,.sql,.db,.sqlite" onchange="restoreDatabase(this)">
+                            <button onclick="document.getElementById('restore_file_input').click()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-xs flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                Restaurer la Base
+                            </button>
+                        </div>
+                        <!-- Seeding -->
+                        <div class="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-emerald-800 mb-2">Données de démo</h3>
+                                <p class="text-xs text-emerald-600 mb-4">Initialise le jeu de test (produits, ventes, fournisseurs).</p>
+                            </div>
+                            <button onclick="adminAction('seed')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-xs flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17.5M12 9V4M9 9h6"></path></svg>
+                                Initialiser la Base
+                            </button>
+                        </div>
+                        <!-- Vider -->
+                        <div class="p-4 bg-rose-50 rounded-xl border border-rose-100 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-rose-800 mb-2">Nettoyage critique</h3>
+                                <p class="text-xs text-rose-500 mb-4">Supprime tous les produits, mouvements de stock et ventes.</p>
+                            </div>
+                            <button onclick="cleanDatabase()" class="w-full btn-outline-red text-xs flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Vider les Tables
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Explication SQLite binaire -->
+                    <div class="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3 text-xs leading-relaxed text-blue-800">
+                        <svg class="w-5 h-5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div>
+                            <span class="font-bold">Note d'intégrité de la Sauvegarde :</span>
+                            Le fichier téléchargé est une copie binaire brute de votre base de données SQLite (<code class="bg-blue-100 px-1 py-0.5 rounded font-mono">.db</code>). Windows n'intégrant pas de lecteur natif pour ce format professionnel, double-cliquer dessus affichera une erreur. C'est le comportement attendu et correct ! Vos données y sont entièrement structurées. Pour explorer ou interroger vos tables directement sous Windows, vous pouvez utiliser l'outil gratuit <a href="https://sqlitebrowser.org/" target="_blank" class="underline font-bold hover:text-blue-950">DB Browser for SQLite</a>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion des Utilisateurs (Admin uniquement) -->
+                <div id="admin_users_management" class="card p-6 border-2 border-slate-100 hidden">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-[#174092]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <h2 class="text-lg font-bold text-slate-800">Gestion des Utilisateurs</h2>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-6">Liste des comptes actifs de l'entreprise. En tant qu'administrateur, vous disposez du droit exclusif de supprimer des utilisateurs.</p>
+                    
+                    <!-- Formulaire d'ajout d'utilisateur -->
+                    <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-200">
+                        <h3 class="text-sm font-bold text-slate-700 mb-3">Ajouter un utilisateur</h3>
+                        <form id="add_user_form" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <input type="email" id="user_email" placeholder="Email" required class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#174092]">
+                            <input type="password" id="user_password" placeholder="Mot de passe" required class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#174092]">
+                            <select id="user_branch" required class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#174092]">
+                                <option value="">Sélectionner une filiale</option>
+                            </select>
+                            <select id="user_type" required class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#174092]">
+                                <option value="">Type de compte</option>
+                                <option value="employee">Employé</option>
+                                <option value="branch-admin">Admin de filiale</option>
+                            </select>
+                            <button type="submit" class="px-4 py-2 bg-[#174092] hover:bg-[#0f2d5c] text-white rounded-lg text-sm font-bold transition-all">
+                                Ajouter
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase">
+                                    <th class="py-3 px-4">Email</th>
+                                    <th class="py-3 px-4">Rôle</th>
+                                    <th class="py-3 px-4">Statut</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="company_users_list">
+                                <!-- Charge dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Zone de Danger (Admin uniquement) -->
+                <div id="admin_danger_zone" class="card p-6 border-2 border-red-100 bg-red-50/20 hidden animate-pulse">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h2 class="text-lg font-bold text-rose-800">Zone de Danger</h2>
+                    </div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-rose-900 mb-1">Désactiver / Supprimer le compte administrateur</h3>
+                            <p class="text-xs text-rose-700">Votre compte sera gelé immédiatement et supprimé définitivement après 30 jours. Se connecter avant réactivera le compte.</p>
+                        </div>
+                        <button onclick="deactivateAdminAccount()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm shrink-0">
+                            Supprimer le compte (Désactiver)
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
 
     <script>
-        function init() {
+        const API_BASE = window.location.origin;
+
+        async function init() {
             const token = localStorage.getItem('omistock_token');
             if (!token) { window.location.href = 'index.html'; return; }
             
@@ -314,52 +449,113 @@
             
             // Mise à jour de l'UI avec les données dynamiques
             document.getElementById('user_email_sidebar').textContent = userEmail;
-            document.getElementById('user_avatar').textContent = initials[0];
             
             document.getElementById('profile_avatar').textContent = initials;
             document.getElementById('profile_name').textContent = fullName;
             document.getElementById('profile_email').textContent = userEmail;
             document.getElementById('contact_email').textContent = userEmail;
             
-            // Différenciation dynamique par entreprise (Multi-Tenant)
-            const isFood = userEmail.includes("food");
-            const companyName = isFood ? "Alimentation DZ" : "Santé Pro Algérie";
-            const locationStr = isFood ? "Constantine, Algérie" : "Alger & Oran, Algérie";
-            const companyEmail = isFood ? "contact@alimentation-dz.com" : "contact@sante-pro.dz";
-            
-            document.getElementById('company_name_sidebar').textContent = companyName.toUpperCase();
-            localStorage.setItem('omistock_company', companyName);
-            document.getElementById('contact_location').textContent = isFood ? "Constantine" : "Alger / Oran";
-            document.getElementById('input_company_name').value = companyName;
-            document.getElementById('input_company_address').value = isFood ? "Zone Industrielle Palma, Constantine" : "12 Rue Didouche Mourad, Alger / Avenue de l'ANP, Oran";
-            document.getElementById('input_company_email').value = companyEmail;
-            document.getElementById('input_company_nif').value = isFood ? "001234567890123" : "000416000987654";
-            document.getElementById('input_company_rc').value = isFood ? "25/00-7894561B21" : "16/00-0123456B20";
+            // Enrich details via profile call
+            try {
+                const meRes = await fetch(`${API_BASE}/api/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (meRes.ok) {
+                    const currentUser = await meRes.json();
+                    document.getElementById('user_email_sidebar').textContent = currentUser.email;
+                    document.getElementById('user_role_badge').textContent = currentUser.user_type || 'ADMIN';
+                    document.getElementById('user_branch_sidebar').textContent = currentUser.branch_name || 'Admin Central';
+                    
+                    if (currentUser.user_type === 'ADMIN') {
+                        document.getElementById('admin_maintenance').classList.remove('hidden');
+                        document.getElementById('admin_users_management').classList.remove('hidden');
+                        document.getElementById('admin_danger_zone').classList.remove('hidden');
+                        loadCompanyUsers();
+                    }
+                }
+            } catch (e) {
+                console.error("Erreur de profil:", e);
+            }
+
+            // Récupération dynamique de l'entreprise (Multi-Tenant) depuis la DB
+            try {
+                const companyRes = await fetch(`${API_BASE}/api/company`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (companyRes.ok) {
+                    const company = await companyRes.json();
+                    document.getElementById('company_name_sidebar').textContent = company.name ? company.name.toUpperCase() : 'OMISTOCK';
+                    localStorage.setItem('omistock_company', company.name || 'OMISTOCK');
+                    
+                    document.getElementById('input_company_name').value = company.name || '';
+                    document.getElementById('input_company_address').value = company.address || '';
+                    document.getElementById('input_company_email').value = company.email || '';
+                    document.getElementById('input_company_nif').value = company.nif || '';
+                    document.getElementById('input_company_rc').value = company.commercial_register_number || '';
+                    document.getElementById('contact_location').textContent = company.address ? company.address.split(',')[0] : "Alger";
+                } else {
+                    // Fallback statique si l'API échoue
+                    const isFood = userEmail.includes("food");
+                    const companyName = isFood ? "AGRO-INDUSTRIE DZ" : "OMISTOCK BUSINESS SOLUTIONS";
+                    document.getElementById('company_name_sidebar').textContent = companyName.toUpperCase();
+                    localStorage.setItem('omistock_company', companyName);
+                }
+            } catch (e) {
+                console.error("Erreur de chargement entreprise:", e);
+            }
         }
 
-        function saveSettings() {
-            const newName = document.getElementById('input_company_name').value;
-            localStorage.setItem('omistock_company', newName);
-            document.getElementById('company_name_sidebar').textContent = newName.toUpperCase();
+        async function saveSettings() {
+            const token = localStorage.getItem('omistock_token');
+            const name = document.getElementById('input_company_name').value;
+            const address = document.getElementById('input_company_address').value;
+            const email = document.getElementById('input_company_email').value;
+            const nif = document.getElementById('input_company_nif').value;
+            const rc = document.getElementById('input_company_rc').value;
 
             const btn = document.querySelector('.btn-solid-blue');
             const originalText = btn.textContent;
             btn.textContent = "Sauvegarde en cours...";
             btn.disabled = true;
             btn.classList.add('opacity-75');
-            
-            // Simulation d'un appel API
-            setTimeout(() => {
-                btn.textContent = "Modifications enregistrées !";
-                btn.classList.replace('bg-[#174092]', 'bg-emerald-600');
-                
+
+            try {
+                const response = await fetch(`${API_BASE}/api/company`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        address: address,
+                        email: email,
+                        nif: nif,
+                        commercial_register_number: rc
+                    })
+                });
+
+                if (response.ok) {
+                    const company = await response.json();
+                    localStorage.setItem('omistock_company', company.name);
+                    document.getElementById('company_name_sidebar').textContent = company.name.toUpperCase();
+                    
+                    btn.textContent = "Modifications enregistrées !";
+                    btn.classList.replace('bg-[#174092]', 'bg-emerald-600');
+                } else {
+                    const err = await response.json();
+                    alert("Erreur de sauvegarde: " + (err.detail || "Inconnue"));
+                }
+            } catch (e) {
+                alert("Erreur réseau lors de la sauvegarde.");
+            } finally {
                 setTimeout(() => {
                     btn.textContent = originalText;
                     btn.classList.replace('bg-emerald-600', 'bg-[#174092]');
                     btn.disabled = false;
                     btn.classList.remove('opacity-75');
                 }, 2000);
-            }, 800);
+            }
         }
 
         function logout() {
@@ -368,7 +564,329 @@
             window.location.href = 'index.html';
         }
 
-        window.onload = init;
+        async function loadAgents() {
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch(`${API_BASE}/api/agents`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const agents = await response.json();
+                    const list = document.getElementById('agents_list');
+                    if (agents.length === 0) {
+                        list.innerHTML = '<p class="text-sm text-slate-400 italic">Aucun agent configuré pour le moment.</p>';
+                        return;
+                    }
+                    list.innerHTML = agents.map(a => `
+                        <div class="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">${a.email}</p>
+                                <p class="text-xs text-slate-500 font-mono mt-1 blur-sm hover:blur-none transition-all cursor-pointer select-all">${a.api_key}</p>
+                            </div>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">AGENT</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Erreur de chargement des agents", e);
+            }
+        }
+
+        async function generateAgentKey() {
+            const token = localStorage.getItem('omistock_token');
+            const nameInput = document.getElementById('agent_name_input');
+            const btn = document.getElementById('btn_generate_key');
+            const name = nameInput.value.trim() || 'Agent IA';
+            
+            btn.textContent = "...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/agents`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+
+                if (response.ok) {
+                    nameInput.value = '';
+                    await loadAgents();
+                } else {
+                    const err = await response.json();
+                    alert("Erreur: " + err.detail);
+                }
+            } catch (e) {
+                alert("Erreur réseau");
+            } finally {
+                btn.textContent = "Générer une clé";
+                btn.disabled = false;
+            }
+        }
+
+        async function backupDatabase(btnElement) {
+            const token = localStorage.getItem('omistock_token');
+            const btn = btnElement || document.querySelector("button[onclick*='backupDatabase']");
+            let originalHTML = "Sauvegarder la Base";
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = "...";
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/backup`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) throw new Error("Backup failed");
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `omistock_backup.db`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                if (btn) {
+                    btn.classList.replace('btn-solid-blue', 'bg-emerald-600');
+                    btn.innerHTML = "Sauvegarde OK !";
+                    setTimeout(() => {
+                        btn.classList.replace('bg-emerald-600', 'btn-solid-blue');
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } catch (e) {
+                alert("Erreur lors de la sauvegarde");
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        async function adminAction(actionType) {
+            const token = localStorage.getItem('omistock_token');
+            if (!token) return;
+
+            const confirmMsg = actionType === 'seed' 
+                ? "Initialiser la base de données avec les données de démonstration ?" 
+                : "ATTENTION : Nettoyer toutes les données ? (Historique, ventes, mouvements)";
+            if (!confirm(confirmMsg)) return;
+
+            if (actionType === 'clean') {
+                alert("Sauvegarde préventive automatique avant nettoyage...");
+                await backupDatabase();
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/${actionType}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const resData = await response.json();
+                alert(resData.message || "Opération réussie !");
+                window.location.reload();
+            } catch (e) {
+                alert("Erreur lors de l'opération");
+            }
+        }
+
+        async function cleanDatabase() {
+            await adminAction('clean');
+        }
+
+        async function restoreDatabase(input) {
+            const token = localStorage.getItem('omistock_token');
+            if (!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            
+            if (!confirm(`Êtes-vous sûr de vouloir restaurer la base de données depuis le fichier "${file.name}" ? Toutes les données actuelles seront remplacées.`)) {
+                input.value = '';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/restore`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                const resData = await response.json();
+                if (response.ok) {
+                    alert(resData.message || "Restauration réussie !");
+                    window.location.reload();
+                } else {
+                    alert("Erreur de restauration: " + (resData.detail || "Inconnue"));
+                }
+            } catch (e) {
+                alert("Erreur réseau lors de la restauration.");
+            } finally {
+                input.value = '';
+            }
+        }
+
+        async function loadCompanyUsers() {
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const users = await response.json();
+                    const tbody = document.getElementById('company_users_list');
+                    if (users.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-sm text-slate-400 italic">Aucun utilisateur trouvé.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = users.map(u => {
+                        const isSelf = u.email === localStorage.getItem('omistock_user');
+                        const statusBadge = u.is_active 
+                            ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">Actif</span>`
+                            : `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full">Désactivé</span>`;
+                        
+                        const actionBtn = isSelf 
+                            ? `<span class="text-xs text-slate-400 italic">Vous-même</span>`
+                            : `<button onclick="deleteUser(${u.id}, '${u.email}')" class="text-rose-600 hover:text-rose-800 text-xs font-bold bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded transition-colors">Supprimer</button>`;
+                        
+                        return `
+                            <tr class="border-b border-slate-50 hover:bg-slate-50/50 text-sm text-slate-700">
+                                <td class="py-3 px-4 font-medium">${u.email}</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded">${u.user_type}</span></td>
+                                <td class="py-3 px-4">${statusBadge}</td>
+                                <td class="py-3 px-4 text-right">${actionBtn}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error("Erreur de chargement des utilisateurs:", e);
+            }
+        }
+
+        async function deleteUser(userId, email) {
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur "${email}" ? cette action est irréversible.`)) {
+                return;
+            }
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                    alert(resData.message || "Utilisateur supprimé avec succès.");
+                    loadCompanyUsers();
+                } else {
+                    alert("Erreur: " + (resData.detail || "Inconnue"));
+                }
+            } catch (e) {
+                alert("Erreur de connexion.");
+            }
+        }
+
+        async function deactivateAdminAccount() {
+            if (!confirm("ATTENTION : Êtes-vous sûr de vouloir désactiver votre compte administrateur ? Vous serez déconnecté immédiatement. Vos données seront conservées pendant 30 jours, après quoi elles seront purgées définitivement. Vous pouvez annuler cela en vous reconnectant simplement.")) {
+                return;
+            }
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/deactivate`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                    alert(resData.message || "Compte désactivé !");
+                    logout();
+                } else {
+                    alert("Erreur: " + (resData.detail || "Inconnue"));
+                }
+            } catch (e) {
+                alert("Erreur de connexion.");
+            }
+        }
+
+        async function loadBranchesForEmployeeForm() {
+            const token = localStorage.getItem('omistock_token');
+            try {
+                const response = await fetch(`${API_BASE}/api/branches`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const branches = await response.json();
+                    const select = document.getElementById('user_branch');
+                    select.innerHTML = '<option value="">Sélectionner une filiale</option>' + 
+                        branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+                }
+            } catch (e) {
+                console.error("Erreur de chargement des filiales:", e);
+            }
+        }
+
+        async function createUser(event) {
+            event.preventDefault();
+            const token = localStorage.getItem('omistock_token');
+            const email = document.getElementById('user_email').value.trim();
+            const password = document.getElementById('user_password').value;
+            const branchId = document.getElementById('user_branch').value;
+            const userType = document.getElementById('user_type').value;
+
+            if (!email || !password || !branchId || !userType) {
+                alert("Veuillez remplir tous les champs, y compris la filiale.");
+                return;
+            }
+
+            const endpoint = userType === 'branch-admin' ? `${API_BASE}/api/admin/users/branch-admin` : `${API_BASE}/api/admin/users/employee`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        branch_id: parseInt(branchId)
+                    })
+                });
+
+                if (response.ok) {
+                    alert("Utilisateur créé avec succès !");
+                    document.getElementById('add_user_form').reset();
+                    await loadCompanyUsers();
+                } else {
+                    const err = await response.json();
+                    alert("Erreur: " + (err.detail || "Opération échouée"));
+                }
+            } catch (e) {
+                console.error("Erreur de création d'utilisateur:", e);
+                alert("Erreur de connexion.");
+            }
+        }
+
+        window.onload = () => {
+            init();
+            loadAgents();
+            loadBranchesForEmployeeForm();
+            loadCompanyUsers();
+            document.getElementById('add_user_form').addEventListener('submit', createUser);
+        };
+    
     </script>
+    <script src="erp-sidebar.js"></script>
 </body>
 </html>

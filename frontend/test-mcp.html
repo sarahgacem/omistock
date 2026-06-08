@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outil de Test MCP Indépendant</title>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-theme">
+
+    <h1>Console de Test MCP (Standalone)</h1>
+    
+    <div class="form-group">
+        <label for="mcp_token">Token d'accès API (Optionnel si désactivé sur la route) :</label>
+        <input type="text" id="mcp_token" placeholder="Collez le token Bearer ici si nécessaire (ex: localStorage.getItem('omistock_token'))">
+    </div>
+
+    <div class="form-group">
+        <label for="mcp_input">Commande ou Question pour l'Agent IA :</label>
+        <input type="text" id="mcp_input" placeholder="Ex: alerte stock, résumé des ventes...">
+    </div>
+
+    <div class="form-group">
+        <button onclick="sendToMCP()">Envoyer au Serveur MCP</button>
+        <div id="status_msg" class="status">En attente d'une action...</div>
+    </div>
+
+    <div class="form-group">
+        <label for="mcp_output">Réponse du Serveur (JSON Brut) :</label>
+        <textarea id="mcp_output" readonly placeholder="Les données s'afficheront ici..."></textarea>
+    </div>
+
+    <script>
+        window.onload = () => {
+            const token = localStorage.getItem('omistock_token');
+            if (token) {
+                document.getElementById('mcp_token').value = token;
+            }
+        };
+
+        async function sendToMCP() {
+            const input = document.getElementById('mcp_input').value;
+            const token = document.getElementById('mcp_token').value;
+            const outputBox = document.getElementById('mcp_output');
+            const statusMsg = document.getElementById('status_msg');
+
+            if (!input.trim()) {
+                alert("Veuillez entrer une commande.");
+                return;
+            }
+
+            outputBox.value = "";
+            statusMsg.textContent = "Requête en cours...";
+
+            // Configuration de la requête
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            try {
+                // On tape directement sur l'API locale
+                const response = await fetch('http://localhost:8000/api/mcp/chat', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ message: input })
+                });
+
+                statusMsg.textContent = `Statut HTTP : ${response.status} ${response.statusText}`;
+
+                // On essaie de parser en JSON pour l'afficher joliment, sinon on affiche en texte brut
+                try {
+                    const data = await response.json();
+                    outputBox.value = JSON.stringify(data, null, 4);
+                } catch (jsonErr) {
+                    const text = await response.text();
+                    outputBox.value = text;
+                }
+
+            } catch (error) {
+                statusMsg.textContent = "Erreur de connexion !";
+                outputBox.value = `Erreur lors du fetch :\n${error.message}\n\nVérifiez que le serveur uvicorn tourne bien sur http://localhost:8000.`;
+            }
+        }
+    </script>
+</body>
+</html>

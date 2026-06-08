@@ -1,82 +1,116 @@
-import asyncio
-from mcp.server.fastmcp import FastMCP
-import sqlite3
 import os
+import httpx
+from mcp.server.fastmcp import FastMCP
+from datetime import datetime
 
 # Création du serveur MCP
 mcp = FastMCP("Omistock Intelligence")
 
-# Chemin vers la base de données (on pointe vers celle du backend)
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend", "stock.db"))
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+# The API key should be provided via environment variables when running the MCP
+API_KEY = os.getenv("AGENT_API_KEY", "")
+
+def get_headers():
+    headers = {}
+    if API_KEY:
+        headers["X-API-KEY"] = API_KEY
+    return headers
 
 @mcp.tool()
-def analyze_stock(company_id: int):
+def analyze_stock() -> str:
     """
     Analyse le stock et retourne la liste des produits en rupture ou presque.
     """
-    if not os.path.exists(DB_PATH):
-        return "Erreur : La base de données est introuvable."
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # On cherche les produits où la quantité est <= 5 (seuil arbitraire pour l'exemple)
-    query = "SELECT name, quantity FROM products WHERE company_id = ? AND quantity <= 5"
-    
-    cursor.execute(query, (company_id,))
-    alertes = cursor.fetchall()
-    conn.close()
-    
-    if not alertes:
-        return "✅ Tout est en ordre. Aucun produit en alerte."
-    
-    reponse = "⚠️ ALERTE STOCK :\n"
-    for name, qty in alertes:
-        reponse += f"- {name} : seulement {qty} restants !\n"
-    
-    return reponse
+    try:
+        response = httpx.get(f"{API_BASE_URL}/api/alerts", headers=get_headers(), timeout=10.0)
+        response.raise_for_status()
+        alertes = response.json()
+        
+        if not alertes:
+            return "✅ Tout est en ordre. Aucun produit en alerte."
+        
+        reponse = "⚠️ ALERTE STOCK :\n"
+        for prod in alertes:
+            reponse += f"- {prod['name']} : seulement {prod.get('quantity', 0)} restants !\n"
+        
+        return reponse
+    except httpx.HTTPStatusError as e:
+        return f"Erreur de l'API ({e.response.status_code}) : L'action a été refusée ou le produit est introuvable."
+    except Exception as e:
+        return f"Erreur de communication avec l'API : {str(e)}"
 
 @mcp.tool()
-def get_business_summary(company_id: int):
+def get_business_summary() -> str:
     """
     Lit les ventes et les logs d'activité pour fournir un résumé business textuel à l'IA.
     """
-    if not os.path.exists(DB_PATH):
-        return "Erreur : La base de données est introuvable."
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Ventes d'aujourd'hui
-    # En SQLite, 'now' est en UTC. Pour être large dans la démo, on prend les 24 dernières heures ou la journée.
-    cursor.execute("SELECT COUNT(*), COALESCE(SUM(total_amount), 0) FROM sales WHERE company_id = ? AND date(date) = date('now')", (company_id,))
-    today_sales = cursor.fetchone()
-    
-    # Ventes totales
-    cursor.execute("SELECT COUNT(*), COALESCE(SUM(total_amount), 0) FROM sales WHERE company_id = ?", (company_id,))
-    all_sales = cursor.fetchone()
-    
-    # Nombre de transferts récents (logs)
-    cursor.execute("SELECT COUNT(*) FROM activity_logs WHERE company_id = ? AND action LIKE '%Transfert%'", (company_id,))
-    nb_transferts = cursor.fetchone()[0]
-
-    conn.close()
-    
-    if today_sales[0] > 0:
-        nb_ventes = today_sales[0]
-        ca = today_sales[1]
-        periode = "aujourd'hui"
-    else:
-        nb_ventes = all_sales[0]
-        ca = all_sales[1]
-        periode = "au total"
+    try:
+        headers = get_headers()
         
-    resume = f"Vous avez fait {nb_ventes} ventes {periode} pour un total de {ca} DA."
-    
-    if nb_transferts > 0:
-        resume += f" Le système a également enregistré {nb_transferts} transfert(s) de stock."
+        # 1. Récupérer les ventes
+        sales_response = httpx.get(f"{API_BASE_URL}/api/sales", headers=headers, timeout=10.0)
+        sales_response.raise_for_status()
+        sales = sales_response.json()
         
-    return resume
+        # 2. Récupérer les logs
+        logs_response = httpx.get(f"{API_BASE_URL}/api/audit_logs", headers=headers, timeout=10.0)
+        logs_response.raise_for_status()
+        logs = logs_response.json()
+        
+        today = datetime.now().date()
+        
+        # Filter today's sales
+        today_sales = []
+        for s in sales:
+            try:
+                sale_date = datetime.fromisoformat(s['date'].replace('Z', '+00:00')).date()
+                if sale_date == today:
+                    today_sales.append(s)
+            except:
+                pass
+        
+        all_sales = sales
+        
+        # 3. Compter les transferts dans les logs
+        nb_transferts = sum(1 for log in logs if 'Transfert' in log.get('action', ''))
+        
+        if len(today_sales) > 0:
+            nb_ventes = len(today_sales)
+            ca = sum(s.get('total_amount', 0) for s in today_sales)
+            periode = "aujourd'hui"
+        else:
+            nb_ventes = len(all_sales)
+            ca = sum(s.get('total_amount', 0) for s in all_sales)
+            periode = "au total"
+            
+        resume = f"Vous avez fait {nb_ventes} ventes {periode} pour un total de {ca} DA."
+        
+        if nb_transferts > 0:
+            resume += f" Le système a également enregistré {nb_transferts} transfert(s) de stock."
+            
+        return resume
+    except httpx.HTTPStatusError as e:
+        return f"Erreur de l'API ({e.response.status_code}) : L'action a été refusée ou non autorisée."
+    except Exception as e:
+        return f"Erreur de communication avec l'API : {str(e)}"
+
+@mcp.tool()
+def predict_stockout(product_id: int) -> str:
+    """
+    Outil d'intelligence artificielle : Analyse l'historique des logs (AuditLog)
+    pour comparer la vitesse des ventes avec le stock restant et prédire une rupture.
+    """
+    try:
+        payload = {"product_id": product_id}
+        response = httpx.post(f"{API_BASE_URL}/api/mcp/analyze", json=payload, headers=get_headers(), timeout=10.0)
+        response.raise_for_status()
+        data = response.json()
+        return data.get("analysis", "Analyse terminée, mais aucune conclusion retournée.")
+    except httpx.HTTPStatusError as e:
+        return f"Erreur de l'API ({e.response.status_code}) : {e.response.json().get('detail', 'Action refusée.')}"
+    except Exception as e:
+        return f"Erreur de communication avec l'API : {str(e)}"
 
 if __name__ == "__main__":
     mcp.run()
+

@@ -1,0 +1,22 @@
+services:
+  omistock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omistock-app
+    ports:
+      - "8000:8000"
+    environment:
+      OMISTOCK_ROOT: /app
+    volumes:
+      # Rechargement à chaud du code
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      # Persistance SQLite (créer stock.db à la racine avant le 1er lancement si besoin)
+      - ./stock.db:/app/stock.db
+    command: >
+      uvicorn backend.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+    restart: unless-stopped

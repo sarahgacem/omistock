@@ -1,25 +1,38 @@
 # Résumé Technique : OMNISTOCK ERP
 
-## 1. Architecture Multi-Tenant
-OMNISTOCK utilise une architecture multi-tenant robuste basée sur l'isolation des données au niveau logiciel via une colonne `company_id` présente dans toutes les tables critiques.
-- **Isolation Stricte** : Chaque requête API filtre systématiquement les données par le `company_id` extrait du token JWT de l'utilisateur.
-- **Middleware de Sécurité** : Un middleware FastAPI intercepte les requêtes `PUT` et `DELETE` pour vérifier que l'utilisateur a le droit de modifier la ressource demandée.
-- **Indépendance des Données** : Deux entreprises différentes (ex: Pharmacie vs Alimentation) sont totalement étanches, avec leurs propres stocks, clients et historiques.
+## 1. Architecture Multi-Tenant & Isolation
+OMNISTOCK utilise une architecture multi-tenant logique basée sur l'isolation des données via une clé étrangère `company_id` présente sur toutes les entités clés (User, Company, Branch, Product, Sale, PurchaseOrder, etc.).
+- **Isolation Active** : Les requêtes API extraient de manière sécurisée le `company_id` à partir du token d'authentification JWT validé par FastAPI. Les filtres SQL sont appliqués systématiquement pour interdire tout accès inter-tenant.
+- **Middleware de Sécurité** : Intercepte les modifications pour assurer la restriction stricte des opérations.
 
-## 2. Fonctionnalités Clés
-1. **Gestion Multi-Filiales** : Centralisation des stocks tout en permettant une gestion granulaire par dépôt ou boutique (ex: Alger vs Oran).
-2. **Transferts Inter-Filiales Sécurisés** : Déplacement de stock atomique (Transaction ACID) avec vérification d'appartenance à la même entreprise.
-3. **Module de Vente & Facturation** : Génération de factures HTML professionnelles et suivi des ventes en temps réel.
-4. **Journaux d'Activité (Audit)** : Traçabilité complète des actions (connexions, ventes, transferts) pour une transparence totale.
-5. **Dashboard Intelligent (MCP)** : Analyse prédictive des stocks et résumé business via une interface IA (Model Context Protocol).
+## 2. Nouveautés de l'Architecture & Sécurité
 
-## 3. Stack Technique
-- **Backend** : FastAPI (Python 3.13) pour une API asynchrone haute performance.
-- **Base de Données** : SQLite avec SQLAlchemy (ORM) pour la gestion des relations et des contraintes (CHECK, Index).
-- **Sécurité** : JWT (JSON Web Tokens) pour l'authentification et passlib (bcrypt) pour le hachage des mots de passe.
-- **Frontend** : Vanilla HTML/JS avec TailwindCSS pour une interface premium, réactive et sans framework lourd.
+### 2.1 Inscription d'Entreprise Enrichie
+La création de compte intègre désormais les détails légaux et commerciaux requis :
+- **Modèle Company** : `commercial_register_number` (RC), `nif` (Numéro d'Identification Fiscale), `activity_sector`, `address`, `email`, et `phone`.
+- **Route d'inscription** : L'API `/register/enterprise` (alias de `/api/signup`) associe automatiquement le premier utilisateur inscrit comme propriétaire `ADMIN` de son entreprise.
 
-## 4. Schéma de la Base de Données
+### 2.2 Contrôle d'Accès Basé sur les Rôles (RBAC)
+Le contrôle d'accès a été modularisé à l'aide de dépendances injectées par FastAPI :
+1. `get_current_admin` : Restreint l'accès uniquement aux utilisateurs de type `ADMIN` (ex: vidage, seeding, deactivation, restore).
+2. `get_current_agent_human` : Permet l'accès aux administrateurs (`ADMIN`) et aux agents humains (`HUMAIN`) (ex: création de clé API, gestion de stock manuelle, approbation de transferts).
+3. `get_current_agent_ai` : Valide l'accès via clé API ou token JWT pour les administrateurs et les agents autonomes (`AGENT`).
+
+### 2.3 Mécanisme de Désactivation Temporaire & Purge (Soft-Delete)
+Gestion du cycle de vie des comptes inspirée d'Instagram :
+- **Désactivation** : Un administrateur peut désactiver son compte (`is_active = False`). Un délai de 30 jours (`deletion_deadline`) est alors calculé et enregistré en base de données. Les données de l'entreprise sont gelées et l'accès est bloqué pour tous les utilisateurs liés.
+- **Réactivation** : Si l'administrateur se reconnecte avant la fin des 30 jours, son compte est automatiquement réactivé (`is_active = True`, `deletion_deadline = None`).
+- **Purge Définitive** : Passé les 30 jours, toute tentative de connexion de l'admin déclenche une purge en cascade définitive de l'utilisateur, de ses filiales, de ses produits, et de son entreprise de la base de données.
+
+### 2.4 Restauration de la Base de Données
+Le système inclut un endpoint de restauration robuste (`POST /api/admin/restore`) acceptant :
+- **Fichiers JSON** : Désactive temporairement les clés étrangères SQLite pour vider et réinsérer les données ordonnées.
+- **Fichiers SQL** : Exécute des scripts bruts SQLite complexes avec gestion transactionnelle.
+- **Fichiers de base SQLite (.db)** : Écrase le fichier SQLite actif de manière sécurisée en fermant au préalable les connexions ORM actives.
+
+---
+
+## 3. Schéma de la Base de Données
 
 ```mermaid
 erDiagram
@@ -44,6 +57,12 @@ erDiagram
     COMPANY {
         int id
         string name
+        string commercial_register_number
+        string activity_sector
+        string nif
+        string address
+        string email
+        string phone
     }
     BRANCH {
         int id
@@ -53,31 +72,15 @@ erDiagram
     USER {
         int id
         string email
+        string user_type
         int company_id
         int branch_id
+        boolean is_active
+        datetime deletion_deadline
     }
     PRODUCT {
         int id
         string name
         int company_id
-    }
-    INVENTORY {
-        int id
-        int product_id
-        int branch_id
-        int quantity
-    }
-    ACTIVITY_LOG {
-        int id
-        int user_id
-        int company_id
-        string action
-        datetime timestamp
-    }
-    SALE {
-        int id
-        int company_id
-        int customer_id
-        float total_amount
     }
 ```
