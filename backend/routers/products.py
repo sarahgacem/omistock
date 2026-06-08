@@ -206,6 +206,114 @@ def create_sale_route(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/api/sales/{sale_id}/invoice/html")
+def get_invoice_html(
+    sale_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    sale = db.query(models.Sale).filter(
+        models.Sale.id == sale_id,
+        models.Sale.company_id == current_user.company_id
+    ).first()
+    
+    if not sale:
+        raise HTTPException(status_code=404, detail="Vente introuvable")
+    
+    company = db.query(models.Company).filter(models.Company.id == current_user.company_id).first()
+    branch = db.query(models.Branch).filter(models.Branch.id == sale.branch_id).first()
+    user = db.query(models.User).filter(models.User.id == sale.user_id).first()
+    
+    items = db.query(models.SaleItem).filter(models.SaleItem.sale_id == sale_id).all()
+    
+    html_template = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Facture #{sale.id}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; }}
+            .header {{ border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }}
+            .company-name {{ font-size: 24px; font-weight: bold; color: #174092; }}
+            .invoice-title {{ font-size: 28px; font-weight: bold; text-align: right; color: #333; }}
+            .info-row {{ display: flex; justify-content: space-between; margin: 10px 0; }}
+            .info-label {{ font-weight: bold; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 30px; }}
+            th {{ background: #174092; color: white; padding: 12px; text-align: left; }}
+            td {{ border: 1px solid #ddd; padding: 12px; }}
+            .total {{ font-size: 20px; font-weight: bold; text-align: right; margin-top: 30px; }}
+            .footer {{ margin-top: 50px; text-align: center; color: #666; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="company-name">{company.name if company else 'OMISTOCK'}</div>
+            <div class="invoice-title">FACTURE #{sale.id}</div>
+        </div>
+        
+        <div class="info-row">
+            <div>
+                <div class="info-label">Date:</div>
+                <div>{sale.created_at.strftime('%d/%m/%Y %H:%M')}</div>
+            </div>
+            <div>
+                <div class="info-label">Filiale:</div>
+                <div>{branch.name if branch else 'N/A'}</div>
+            </div>
+        </div>
+        
+        <div class="info-row">
+            <div>
+                <div class="info-label">Vendeur:</div>
+                <div>{user.email if user else 'N/A'}</div>
+            </div>
+            <div>
+                <div class="info-label">Transaction #:</div>
+                <div>{sale.id}</div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Quantité</th>
+                    <th>Prix unitaire</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
+    
+    for item in items:
+        product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
+        html_template += f"""
+                <tr>
+                    <td>{product.name if product else 'N/A'}</td>
+                    <td>{item.quantity}</td>
+                    <td>{item.unit_price} DA</td>
+                    <td>{item.total} DA</td>
+                </tr>
+        """
+    
+    html_template += f"""
+            </tbody>
+        </table>
+        
+        <div class="total">Total: {sale.total_amount} DA</div>
+        
+        <div class="footer">
+            <p>Document généré automatiquement par OMISTOCK</p>
+            <p>Date d'émission: {sale.created_at.strftime('%d/%m/%Y %H:%M')}</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_template)
+
+
 @router.get("/api/movements", response_model=List[schemas.StockMovementResponse])
 def get_movements_route(
     current_user: Optional[models.User] = Depends(get_current_user),

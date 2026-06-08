@@ -393,8 +393,16 @@
                     throw new Error(err.detail || "Erreur de réapprovisionnement");
                 }
 
+                const result = await response.json();
                 alert("Réapprovisionnement effectué avec succès !");
                 closeRestockModal();
+                
+                // Offer to download purchase order
+                if (result.movement_id) {
+                    if (confirm("Voulez-vous télécharger le bon de commande ?")) {
+                        window.open(`${API_BASE}/api/restock/${result.movement_id}/order/html`, '_blank');
+                    }
+                }
             } catch (error) {
                 alert(error.message);
             } finally {

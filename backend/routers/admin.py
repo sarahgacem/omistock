@@ -381,13 +381,115 @@ def restock(
         )
         
         db.commit()
-        return {"message": "Réapprovisionnement effectué avec succès"}
+        
+        # Return movement_id for purchase order generation
+        return {
+            "message": "Réapprovisionnement effectué avec succès",
+            "movement_id": stock_movement.id
+        }
     except HTTPException:
         db.rollback()
         raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/restock/{movement_id}/order/html")
+def get_purchase_order_html(
+    movement_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    movement = db.query(models.StockMovement).filter(
+        models.StockMovement.id == movement_id,
+        models.StockMovement.company_id == current_user.company_id,
+        models.StockMovement.movement_type == "IN"
+    ).first()
+    
+    if not movement:
+        raise HTTPException(status_code=404, detail="Mouvement de réapprovisionnement introuvable")
+    
+    company = db.query(models.Company).filter(models.Company.id == current_user.company_id).first()
+    branch = db.query(models.Branch).filter(models.Branch.id == movement.branch_id).first()
+    product = db.query(models.Product).filter(models.Product.id == movement.product_id).first()
+    
+    html_template = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Bon de Commande #{movement.id}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; }}
+            .header {{ border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }}
+            .company-name {{ font-size: 24px; font-weight: bold; color: #174092; }}
+            .order-title {{ font-size: 28px; font-weight: bold; text-align: right; color: #333; }}
+            .info-row {{ display: flex; justify-content: space-between; margin: 10px 0; }}
+            .info-label {{ font-weight: bold; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 30px; }}
+            th {{ background: #4fd1c5; color: white; padding: 12px; text-align: left; }}
+            td {{ border: 1px solid #ddd; padding: 12px; }}
+            .total {{ font-size: 20px; font-weight: bold; text-align: right; margin-top: 30px; }}
+            .footer {{ margin-top: 50px; text-align: center; color: #666; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="company-name">{company.name if company else 'OMISTOCK'}</div>
+            <div class="order-title">BON DE COMMANDE #{movement.id}</div>
+        </div>
+        
+        <div class="info-row">
+            <div>
+                <div class="info-label">Date:</div>
+                <div>{movement.created_at.strftime('%d/%m/%Y %H:%M')}</div>
+            </div>
+            <div>
+                <div class="info-label">Filiale de réception:</div>
+                <div>{branch.name if branch else 'N/A'}</div>
+            </div>
+        </div>
+        
+        <div class="info-row">
+            <div>
+                <div class="info-label">Fournisseur:</div>
+                <div>{movement.reason.replace('Réapprovisionnement depuis ', '') if 'Réapprovisionnement depuis ' in movement.reason else movement.reason}</div>
+            </div>
+            <div>
+                <div class="info-label">Commande #:</div>
+                <div>{movement.id}</div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Quantité commandée</th>
+                    <th>Prix unitaire</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{product.name if product else 'N/A'}</td>
+                    <td>{movement.quantity}</td>
+                    <td>N/A</td>
+                    <td>N/A</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            <p>Document généré automatiquement par OMISTOCK</p>
+            <p>Date d'émission: {movement.created_at.strftime('%d/%m/%Y %H:%M')}</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_template)
 
 
 @router.get("/api/company", response_model=schemas.CompanyResponse)
