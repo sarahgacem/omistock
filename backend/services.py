@@ -43,7 +43,8 @@ def get_dashboard_stats_data(db: Session, cid: int, branch_id: Optional[int] = N
     if not products and not branch_id:
         return {
             "summary": {"total_products": 0, "alerts_count": 0, "total_value": 0, "total_qty": 0},
-            "alerts": [], "top_5": [], "top_sold": [], "movements": [], "trend": []
+            "alerts": [], "top_5": [], "top_sold": [], "movements": [], "trend": [],
+            "branch_distribution": []
         }
 
     today = datetime.now().date()
@@ -98,6 +99,24 @@ def get_dashboard_stats_data(db: Session, cid: int, branch_id: Optional[int] = N
             "date": m.created_at.strftime("%d/%m %H:%M") if m.created_at else "--"
         })
     
+    # Calculate branch distribution (real data)
+    branches = db.query(models.Branch).filter(models.Branch.company_id == cid).all()
+    branch_distribution = []
+    for branch in branches:
+        # Get inventory items for this branch
+        branch_inventory = db.query(models.Inventory).join(models.Product).filter(
+            models.Inventory.branch_id == branch.id,
+            models.Product.company_id == cid
+        ).all()
+        
+        # Calculate stock value: Quantity × Purchase price
+        branch_value = sum(item.quantity * item.product.price for item in branch_inventory)
+        branch_distribution.append({
+            "branch_name": branch.name,
+            "branch_city": branch.city,
+            "stock_value": branch_value
+        })
+    
     return {
         "summary": {
             "total_products": total_products,
@@ -109,7 +128,8 @@ def get_dashboard_stats_data(db: Session, cid: int, branch_id: Optional[int] = N
         "top_5": [{"name": p.name, "quantity": p.quantity} for p in top_5],
         "top_sold": top_sold,
         "movements": movements_list,
-        "trend": trend
+        "trend": trend,
+        "branch_distribution": branch_distribution
     }
 
 def analyze_product_mcp(db: Session, product_id: int, company_id: int, user_id: int) -> str:

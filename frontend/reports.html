@@ -298,20 +298,31 @@
                 options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // Chart 2: Branch Distribution
-            new Chart(document.getElementById('branchChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Alger', 'Oran', 'Sétif', 'Constantine'],
-                    datasets: [{
-                        label: 'Valeur Stock (k DA)',
-                        data: [450, 210, 180, 120],
-                        backgroundColor: '#1e293b',
-                        borderRadius: 15
-                    }]
-                },
-                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { display: false } } } }
-            });
+            // Chart 2: Branch Distribution (real data)
+            const branchData = stats.branch_distribution || [];
+            const branchChartCanvas = document.getElementById('branchChart');
+            
+            if (branchData.length === 0) {
+                // Show "Aucune donnée disponible" message
+                branchChartCanvas.parentNode.innerHTML = '<p class="text-slate-400 text-center py-10">Aucune donnée disponible</p>';
+            } else {
+                const labels = branchData.map(b => b.branch_name);
+                const data = branchData.map(b => b.stock_value / 1000); // Convert to k DA
+                
+                new Chart(branchChartCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Valeur Stock (k DA)',
+                            data: data,
+                            backgroundColor: '#1e293b',
+                            borderRadius: 15
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { display: false } } } }
+                });
+            }
         }
 
         function renderSummaryTable(stats) {
