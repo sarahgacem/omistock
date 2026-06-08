@@ -307,6 +307,88 @@ def create_branch_admin(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/api/restock")
+def restock(
+    restock_data: schemas.RestockCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        # Vérifier que le fournisseur appartient à l'entreprise
+        supplier = db.query(models.Supplier).filter(
+            models.Supplier.id == restock_data.supplier_id,
+            models.Supplier.company_id == current_user.company_id
+        ).first()
+        if not supplier:
+            raise HTTPException(status_code=400, detail="Fournisseur invalide ou n'appartient pas à votre entreprise.")
+        
+        # Vérifier que le produit appartient à l'entreprise
+        product = db.query(models.Product).filter(
+            models.Product.id == restock_data.product_id,
+            models.Product.company_id == current_user.company_id
+        ).first()
+        if not product:
+            raise HTTPException(status_code=400, detail="Produit invalide ou n'appartient pas à votre entreprise.")
+        
+        # Vérifier que la filiale appartient à l'entreprise
+        branch = db.query(models.Branch).filter(
+            models.Branch.id == restock_data.branch_id,
+            models.Branch.company_id == current_user.company_id
+        ).first()
+        if not branch:
+            raise HTTPException(status_code=400, detail="Filiale invalide ou n'appartient pas à votre entreprise.")
+        
+        # Trouver ou créer l'inventaire pour ce produit dans cette filiale
+        inventory = db.query(models.Inventory).filter(
+            models.Inventory.product_id == restock_data.product_id,
+            models.Inventory.branch_id == restock_data.branch_id
+        ).first()
+        
+        if inventory:
+            inventory.quantity += restock_data.quantity
+        else:
+            inventory = models.Inventory(
+                product_id=restock_data.product_id,
+                branch_id=restock_data.branch_id,
+                quantity=restock_data.quantity,
+                min_threshold=5
+            )
+            db.add(inventory)
+        
+        # Mettre à jour la quantité globale du produit
+        product.quantity = (product.quantity or 0) + restock_data.quantity
+        
+        # Créer un mouvement de stock de type IN
+        stock_movement = models.StockMovement(
+            product_id=restock_data.product_id,
+            branch_id=restock_data.branch_id,
+            quantity=restock_data.quantity,
+            reason=f"Réapprovisionnement depuis {supplier.name}",
+            company_id=current_user.company_id,
+            movement_type="IN"
+        )
+        db.add(stock_movement)
+        
+        # Créer un log d'activité
+        log_audit(
+            db,
+            current_user.id,
+            "RESTOCK",
+            f"Produit: {product.name}, Fournisseur: {supplier.name}",
+            f"+{restock_data.quantity} unités",
+            current_user.company_id
+        )
+        
+        db.commit()
+        return {"message": "Réapprovisionnement effectué avec succès"}
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/api/company", response_model=schemas.CompanyResponse)
 def get_company(
     current_user: models.User = Depends(get_current_user),

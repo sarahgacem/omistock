@@ -79,10 +79,16 @@
                 </div>
                 <p class="text-slate-500 font-medium text-sm" id="total_suppliers">Chargement...</p>
             </div>
-            <button class="bg-[#4fd1c5] hover:bg-teal-500 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Nouveau Fournisseur
-            </button>
+            <div class="flex gap-3">
+                <button onclick="openRestockModal()" class="bg-[#4fd1c5] hover:bg-teal-500 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Réapprovisionner
+                </button>
+                <button class="bg-[#174092] hover:bg-[#0f2d5c] text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Nouveau Fournisseur
+                </button>
+            </div>
         </header>
 
         <!-- Grille de Fournisseurs -->
@@ -90,6 +96,59 @@
             <p class="text-slate-500">Chargement des fournisseurs...</p>
         </div>
     </main>
+
+    <!-- Modal de Réapprovisionnement -->
+    <div id="restock_modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl transform transition-all">
+            <h3 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                <div class="p-2 bg-teal-100 text-teal-600 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </div>
+                Réapprovisionner le Stock
+            </h3>
+            
+            <form id="restock_form" onsubmit="submitRestock(event)" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Fournisseur</label>
+                    <select id="restock_supplier" required class="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all">
+                        <option value="">Sélectionner un fournisseur</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Produit</label>
+                    <select id="restock_product" required class="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all">
+                        <option value="">Sélectionner un produit</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Filiale / Dépôt</label>
+                    <select id="restock_branch" required class="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all">
+                        <option value="">Sélectionner une filiale</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Quantité</label>
+                        <input type="number" id="restock_quantity" required min="1" value="1" class="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Prix d'achat (optionnel)</label>
+                        <input type="number" id="restock_price" min="0" step="0.01" placeholder="0.00" class="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-slate-100 flex gap-3 justify-end">
+                    <button type="button" onclick="closeRestockModal()" class="px-5 py-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-semibold rounded-xl transition-colors">Annuler</button>
+                    <button type="submit" id="submit_restock_btn" class="px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-xl shadow-md transition-colors flex items-center gap-2">
+                        Valider
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         async function init() {
@@ -257,6 +316,92 @@
         }
 
         window.onload = init;
+
+        async function openRestockModal() {
+            document.getElementById('restock_modal').classList.remove('hidden');
+            
+            const token = localStorage.getItem('omistock_token');
+            const API_BASE = window.location.origin;
+            
+            try {
+                // Load suppliers
+                const supplierRes = await fetch(`${API_BASE}/api/suppliers`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const suppliers = await supplierRes.json();
+                const supplierSelect = document.getElementById('restock_supplier');
+                supplierSelect.innerHTML = '<option value="">Sélectionner un fournisseur</option>' + 
+                    suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+                // Load products
+                const productRes = await fetch(`${API_BASE}/api/inventory`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const products = await productRes.json();
+                const productSelect = document.getElementById('restock_product');
+                productSelect.innerHTML = '<option value="">Sélectionner un produit</option>' + 
+                    products.map(p => `<option value="${p.id}">${p.name} (Stock: ${p.quantity})</option>`).join('');
+
+                // Load branches
+                const branchRes = await fetch(`${API_BASE}/api/branches`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const branches = await branchRes.json();
+                const branchSelect = document.getElementById('restock_branch');
+                branchSelect.innerHTML = '<option value="">Sélectionner une filiale</option>' + 
+                    branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            } catch (error) {
+                console.error("Erreur de chargement pour la modale", error);
+                alert("Erreur de chargement des données");
+            }
+        }
+
+        function closeRestockModal() {
+            document.getElementById('restock_modal').classList.add('hidden');
+            document.getElementById('restock_form').reset();
+        }
+
+        async function submitRestock(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit_restock_btn');
+            btn.innerHTML = 'Traitement...';
+            btn.disabled = true;
+
+            const supplierId = parseInt(document.getElementById('restock_supplier').value);
+            const productId = parseInt(document.getElementById('restock_product').value);
+            const branchId = parseInt(document.getElementById('restock_branch').value);
+            const quantity = parseInt(document.getElementById('restock_quantity').value);
+            const purchasePrice = parseFloat(document.getElementById('restock_price').value) || 0;
+
+            const token = localStorage.getItem('omistock_token');
+            const API_BASE = window.location.origin;
+
+            const payload = {
+                supplier_id: supplierId,
+                product_id: productId,
+                branch_id: branchId,
+                quantity: quantity,
+                purchase_price: purchasePrice
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/restock`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Erreur de réapprovisionnement");
+                }
+
+                alert("Réapprovisionnement effectué avec succès !");
+                closeRestockModal();
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                btn.innerHTML = 'Valider';
+                btn.disabled = false;
+            }
+        }
     
     </script>
     <script src="erp-sidebar.js"></script>

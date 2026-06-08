@@ -231,6 +231,13 @@ class BranchUserCreate(BaseModel):
     password: str
     branch_id: int
 
+class RestockCreate(BaseModel):
+    supplier_id: int
+    product_id: int
+    branch_id: int
+    quantity: int
+    purchase_price: Optional[float] = 0.0
+
 class AgentAccessCreate(BaseModel):
     name: str
 
