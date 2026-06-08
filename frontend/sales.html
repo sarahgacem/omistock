@@ -181,6 +181,11 @@
             try {
                 // We'll also need branches to resolve branch_id
                 const branchesRes = await fetch(`${API_BASE}/api/branches`, { headers: { 'Authorization': `Bearer ${token}` } });
+                
+                if (!branchesRes.ok) {
+                    throw new Error(`Erreur chargement branches: ${branchesRes.status}`);
+                }
+                
                 const branches = await branchesRes.json();
                 const branchMap = {};
                 branches.forEach(b => branchMap[b.id] = b.name);
@@ -191,12 +196,17 @@
                 
                 if (response.status === 401 || response.status === 403) { logout(); return; }
                 
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
                 const sales = await response.json();
                 const salesCount = Array.isArray(sales) ? sales.length : 0;
                 document.getElementById('total_sales').textContent = `${salesCount} ventes enregistrées`;
                 renderTable(sales, branchMap);
             } catch (error) {
                 console.error("Erreur de chargement:", error);
+                document.getElementById('total_sales').textContent = "Erreur de chargement";
             }
         }
 
