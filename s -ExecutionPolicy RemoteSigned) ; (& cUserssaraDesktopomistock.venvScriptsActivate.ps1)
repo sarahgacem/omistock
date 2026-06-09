@@ -1,0 +1,5 @@
+[33m022f6ca[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: restore proper routing and schemas after corrupted stash merge resolution, enable full auto-seed on empty db, and add api_key column migration
+[33m333c426[m Fix stash pop conflicts
+[33m2bc57af[m Resolve merge conflicts in backend
+[33m10839c0[m fix: add /health endpoint + robust startup error handling for Render deploy
+[33ma0b9f5b[m fix: fallback to port 8000 if PORT environment variable is not defined in Dockerfile
