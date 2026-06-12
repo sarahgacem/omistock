@@ -205,13 +205,13 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 @app.get("/products", response_model=List[schemas.ProductResponse])
 @app.get("/api/inventory", response_model=List[schemas.ProductResponse])
 def get_products(
-    branch_id: Optional[int] = None, 
+    branch_id: Optional[int] = None,
     sort: Optional[str] = None,
-    current_user: Optional[models.User] = Depends(get_current_user), 
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     try:
-        cid = current_user.company_id if current_user else 1
+        cid = current_user.company_id
         query = db.query(models.Product).filter(models.Product.company_id == cid)
         
         # Filter by Branch (Localisation) if provided
@@ -298,8 +298,8 @@ def get_product(product_id: int, current_user: models.User = Depends(get_current
     return db_product
 
 @app.get("/api/alerts", response_model=List[schemas.ProductResponse])
-def get_alerts(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
-    cid = current_user.company_id if current_user else 1
+def get_alerts(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    cid = current_user.company_id
     return db.query(models.Product).filter(
         models.Product.company_id == cid,
         models.Product.quantity <= models.Product.min_threshold
@@ -307,9 +307,9 @@ def get_alerts(current_user: Optional[models.User] = Depends(get_current_user), 
 
 @app.get("/dashboard/stats")
 @app.get("/api/stats")
-def get_dashboard_stats(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_dashboard_stats(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
-        cid = current_user.company_id if current_user else 1
+        cid = current_user.company_id
         products = db.query(models.Product).filter(models.Product.company_id == cid).all()
         
         if not products:
