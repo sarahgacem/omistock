@@ -1,0 +1,4 @@
+# Dependances du serveur MCP (mcp/server.py).
+# Separe de backend/requirements.txt car le SDK MCP requiert une version
+# de uvicorn plus recente que celle epinglee pour le backend.
+mcp>=1.2.0

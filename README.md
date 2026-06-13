@@ -57,7 +57,7 @@ Le serveur MCP fonctionnel se trouve dans `mcp/server.py`. Il lit la base `stock
 et expose des outils d'analyse (`analyze_stock`, `get_business_summary`).
 
 ```bash
-pip install -r backend/requirements.txt   # inclut la dépendance `mcp`
+pip install -r mcp/requirements.txt   # dépendance `mcp` (env. séparé du backend)
 python mcp/server.py
 ```
 

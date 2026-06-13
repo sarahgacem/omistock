@@ -92,7 +92,7 @@ unique basée sur **FastMCP** qui lit directement la base SQLite `stock.db`.
   - `get_business_summary(company_id)` : résumé des ventes (jour/total) et des transferts.
 - **Flux** : `LLM (client MCP) → mcp/server.py → SQLite (stock.db)`.
 - **Isolation** : le `company_id` est passé en paramètre des outils.
-- **Dépendance** : `mcp` (déclarée dans `backend/requirements.txt`).
+- **Dépendance** : `mcp` (déclarée dans `mcp/requirements.txt`, environnement séparé du backend).
 
 > Note : l'analyse et les recommandations sont générées par le LLM en aval ;
 > le serveur MCP se limite à fournir des données factuelles.
