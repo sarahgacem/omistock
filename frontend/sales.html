@@ -144,7 +144,7 @@
                 const sales = await response.json();
                 const salesCount = Array.isArray(sales) ? sales.length : 0;
                 document.getElementById('total_sales').textContent = `${salesCount} transactions enregistrées`;
-                renderTable(sales, branchMap);
+                renderTable(sales, branchMap, token);
             } catch (error) {
                 console.error("Erreur de chargement:", error);
             }
@@ -155,7 +155,7 @@
             return new Date(dateString).toLocaleDateString('fr-FR', options);
         }
 
-        function renderTable(sales, branchMap) {
+        function renderTable(sales, branchMap, token) {
             const tbody = document.getElementById('sales_table');
             tbody.innerHTML = '';
             
@@ -174,7 +174,7 @@
                     <td class="py-4 px-6 text-sm text-slate-600">${branchMap[s.branch_id] || 'N/A'}</td>
                     <td class="py-4 px-6 text-sm font-bold text-teal-600">${s.total_amount} DA</td>
                     <td class="py-4 px-6 text-right space-x-2">
-                        <button onclick="window.open('http://localhost:8001/sales/${s.id}/invoice/html', '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
+                        <button onclick="window.open('${API_BASE}/sales/${s.id}/invoice/html?token=${encodeURIComponent(token)}', '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
                             <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         </button>
                     </td>

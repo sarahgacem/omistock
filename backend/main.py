@@ -434,8 +434,22 @@ def get_sales(current_user: Optional[models.User] = Depends(get_current_user), d
     return db.query(models.Sale).filter(models.Sale.company_id == cid).all()
 
 @app.get("/sales/{sale_id}/invoice/html")
-def get_invoice_html(sale_id: int, db: Session = Depends(get_db)):
-    sale = db.query(models.Sale).filter(models.Sale.id == sale_id).first()
+def get_invoice_html(sale_id: int, token: Optional[str] = None, db: Session = Depends(get_db)):
+    # Authentification via token en query param (compatible avec window.open)
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentification requise")
+    try:
+        payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
+        company_id = payload.get("company_id")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token invalide")
+    if company_id is None:
+        raise HTTPException(status_code=401, detail="Token invalide")
+
+    sale = db.query(models.Sale).filter(
+        models.Sale.id == sale_id,
+        models.Sale.company_id == company_id
+    ).first()
     if not sale: raise HTTPException(status_code=404, detail="Vente non trouvée")
     
     items_html = "".join([f"<tr><td>{item.product.name}</td><td>{item.quantity}</td><td>{item.unit_price} DA</td><td>{item.quantity * item.unit_price} DA</td></tr>" for item in sale.items])
