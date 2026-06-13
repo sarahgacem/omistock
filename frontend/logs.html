@@ -128,7 +128,7 @@
             const token = await getAuthToken();
             if (!token) return;
 
-            const API_BASE = "http://" + (window.location.hostname || "localhost") + ":8000";
+            const API_BASE = window.location.origin;
             try {
                 const response = await fetch(`${API_BASE}/api/movements`, {
                     headers: { 'Authorization': `Bearer ${token}` }

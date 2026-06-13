@@ -71,6 +71,7 @@
     </div>
 
     <script>
+        const API_BASE = window.location.origin;
         const form = document.getElementById('login-form');
         
         async function performLogin(email, password) {
@@ -79,7 +80,7 @@
             formData.append('password', password);
 
             try {
-                const res = await fetch('http://localhost:8001/token', {
+                const res = await fetch(`${API_BASE}/token`, {
                     method: 'POST',
                     body: formData
                 });

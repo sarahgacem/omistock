@@ -59,7 +59,7 @@
 
     <script>
         let scanner = null;
-        const API_BASE = "http://" + (window.location.hostname || "localhost") + ":8000";
+        const API_BASE = window.location.origin;
 
         function startScan() {
             scanner = new Html5Qrcode("reader");

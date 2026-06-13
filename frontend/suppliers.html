@@ -112,7 +112,7 @@
             if(userEmail.includes("food")) document.getElementById('company_name_sidebar').textContent = "ALIMENTATION DZ";
             else document.getElementById('company_name_sidebar').textContent = "SANTÉ PRO ALGERIE";
 
-            const API_BASE = "http://" + (window.location.hostname || "localhost") + ":8000";
+            const API_BASE = window.location.origin;
             try {
                 const response = await fetch(`${API_BASE}/api/suppliers`, {
                     headers: { 'Authorization': `Bearer ${token}` }

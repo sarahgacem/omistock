@@ -157,7 +157,7 @@
     </main>
 
     <script>
-        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8001";
+        const API_BASE = window.location.origin;
 
         async function init() {
             const savedCompany = localStorage.getItem('omistock_company');
