@@ -54,7 +54,7 @@ http://localhost:8000/app/index.html
 ## 🤖 Serveur MCP
 
 Le serveur MCP fonctionnel se trouve dans `mcp/server.py`. Il lit la base `stock.db`
-et expose des outils d'analyse (`analyze_stock`, `get_business_summary`).
+et expose des outils d'analyse (`get_stock_alerts`, `get_business_summary`).
 
 ```bash
 pip install -r mcp/requirements.txt   # dépendance `mcp` (env. séparé du backend)

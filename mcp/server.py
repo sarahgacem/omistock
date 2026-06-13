@@ -10,7 +10,7 @@ mcp = FastMCP("Omistock Intelligence")
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "stock.db"))
 
 @mcp.tool()
-def analyze_stock(company_id: int):
+def get_stock_alerts(company_id: int):
     """
     Analyse le stock et retourne la liste des produits en rupture ou presque.
     """

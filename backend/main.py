@@ -264,8 +264,8 @@ def delete_product(product_id: int, current_user: models.User = Depends(get_curr
     return {"status": "deleted"}
 
 @app.post("/api/transfer")
-def transfer_stock(data: schemas.TransferCreate, current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
-    cid = current_user.company_id if current_user else 1
+def transfer_stock(data: schemas.TransferCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    cid = current_user.company_id
     
     # Récupérer l'inventaire des deux dépôts
     from_inv = db.query(models.Inventory).filter(models.Inventory.product_id == data.product_id, models.Inventory.branch_id == data.from_branch_id).first()
@@ -378,7 +378,7 @@ def get_dashboard_stats(current_user: models.User = Depends(get_current_user), d
 
 @app.get("/products/{product_id}/analyze")
 @app.get("/api/products/{product_id}/analyze")
-def analyze_product_mcp(product_id: int, current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
+def analyze_product_mcp(product_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produit non trouvé")
@@ -426,18 +426,18 @@ def scan_sell(data: dict, current_user: models.User = Depends(get_current_user),
 @app.get("/branches")
 @app.get("/api/branches")
 def get_branches(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    cid = current_user.company_id if current_user else 1
+    cid = current_user.company_id
     return db.query(models.Branch).filter(models.Branch.company_id == cid).all()
 
 @app.get("/api/suppliers", response_model=List[schemas.SupplierResponse])
-def get_suppliers(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
-    cid = current_user.company_id if current_user else 1
+def get_suppliers(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    cid = current_user.company_id
     return db.query(models.Supplier).filter(models.Supplier.company_id == cid).all()
 
 @app.get("/sales")
 @app.get("/api/sales")
-def get_sales(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
-    cid = current_user.company_id if current_user else 1
+def get_sales(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    cid = current_user.company_id
     return db.query(models.Sale).filter(models.Sale.company_id == cid).all()
 
 @app.get("/sales/{sale_id}/invoice/html")
@@ -489,8 +489,8 @@ def get_invoice_html(sale_id: int, token: Optional[str] = None, db: Session = De
     return HTMLResponse(content=html_content)
 
 @app.get("/api/movements", response_model=List[schemas.StockMovementResponse])
-def get_movements(current_user: Optional[models.User] = Depends(get_current_user), db: Session = Depends(get_db)):
-    cid = current_user.company_id if current_user else 1
+def get_movements(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    cid = current_user.company_id
     return db.query(models.StockMovement).filter(models.StockMovement.company_id == cid).order_by(models.StockMovement.created_at.desc()).all()
 
 frontend_path = pathlib.Path(__file__).parent.parent / "frontend"

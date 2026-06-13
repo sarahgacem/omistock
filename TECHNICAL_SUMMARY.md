@@ -88,7 +88,7 @@ Le serveur MCP fonctionnel est `mcp/server.py`. Il s'agit d'une implémentation
 unique basée sur **FastMCP** qui lit directement la base SQLite `stock.db`.
 
 - **Outils exposés** :
-  - `analyze_stock(company_id)` : liste les produits sous le seuil pour une entreprise.
+  - `get_stock_alerts(company_id)` : liste les produits sous le seuil pour une entreprise.
   - `get_business_summary(company_id)` : résumé des ventes (jour/total) et des transferts.
 - **Flux** : `LLM (client MCP) → mcp/server.py → SQLite (stock.db)`.
 - **Isolation** : le `company_id` est passé en paramètre des outils.
