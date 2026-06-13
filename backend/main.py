@@ -155,16 +155,23 @@ app.add_middleware(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentification invalide",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
-        email: str = payload.get("sub")
-        company_id: int = payload.get("company_id")
-        if email is None or company_id is None:
-            return None
-        user = db.query(models.User).filter(models.User.email == email).first()
-        return user
-    except:
-        return None
+    except JWTError:
+        raise credentials_exception
+    email = payload.get("sub")
+    company_id = payload.get("company_id")
+    if email is None or company_id is None:
+        raise credentials_exception
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    return user
 
 # Isolation Middleware
 class TenantIsolationMiddleware(BaseHTTPMiddleware):
