@@ -17,7 +17,11 @@ python main.py
 Le serveur sera lancé sur `http://localhost:8000`.
 
 ## 3. Accès au Frontend
-Ouvrez simplement le fichier `frontend/index.html` dans votre navigateur.
+Le frontend est servi par le backend. Ouvrez dans votre navigateur :
+`http://localhost:8000/app/index.html`
+
+> Ne pas ouvrir le fichier en `file://` : le frontend détermine l'URL de l'API
+> à partir de `window.location.origin` et doit donc être servi par le backend.
 
 ## 4. Comptes de Démonstration
 Utilisez les boutons d'accès rapide sur la page de connexion ou les identifiants suivants :

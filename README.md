@@ -1,39 +1,66 @@
 # OMISTOCK - Système de Gestion de Stock Intelligent
 
-OMISTOCK est une plateforme web moderne de gestion d'inventaire multi-tenant, conçue pour les entreprises multisites. Elle permet un suivi précis des stocks, des ventes et des rapports financiers en temps réel.
+OMISTOCK est une plateforme web de gestion d'inventaire multi-tenant, conçue pour les entreprises multisites. Elle permet un suivi des stocks, des ventes et des rapports, avec une application mobile (PWA) et un serveur MCP pour l'analyse des données.
 
 ## 🚀 Fonctionnalités Clés
 
-- **Dashboard Dynamique** : Visualisation instantanée des KPIs (Valeur du stock, alertes, ventes).
-- **Gestion Multi-sites** : Support natif pour plusieurs filiales (ex: Alger, Oran, Constantine) avec isolation des données.
-- **Inventaire Universel** : Adapté à tout type de secteur (Électronique, Pharmacie, Alimentaire, etc.).
-- **Rapports & Analyses** : Graphiques avancés avec Chart.js et calcul de bénéfices.
-- **Exportation Professionnelle** : Génération de factures HTML et export de rapports au format PDF.
-- **Sécurité Multi-Tenant** : Authentification JWT avec isolation stricte par entreprise (Company ID).
+- **Dashboard Dynamique** : KPIs (valeur du stock, alertes, quantités) et graphiques Chart.js.
+- **Gestion Multi-sites** : Plusieurs filiales (ex: Alger, Oran, Constantine) avec isolation des données par entreprise.
+- **Inventaire par dépôt** : Stock géré par filiale, transferts inter-dépôts.
+- **Rapports** : Visualisation des indicateurs et impression de factures HTML.
+- **Sécurité Multi-Tenant** : Authentification JWT avec isolation par entreprise (Company ID).
+- **PWA Mobile** : Scan de codes-barres et installation sur mobile.
+- **Serveur MCP** : Outils d'analyse (alertes de stock, résumé business) consommables par un LLM.
 
 ## 🛠️ Stack Technique
 
 - **Backend** : FastAPI (Python 3.10+), SQLAlchemy (ORM), SQLite.
-- **Frontend** : Vanilla JS, TailwindCSS, Chart.js.
-- **Authentification** : OAuth2 avec Password flow et jetons JWT.
+- **Frontend** : Vanilla JS, TailwindCSS, Chart.js (servi par le backend sous `/app`).
+- **Authentification** : OAuth2 password flow + jetons JWT.
+- **MCP** : `mcp` (FastMCP) — voir `mcp/server.py`.
 
-## 📦 Installation
+## 📦 Installation & Lancement
 
-Consultez le fichier [Installation Rapide](docs/installation.md) pour les instructions détaillées.
+> Prérequis : Python 3.10+.
 
-# OMISTOCK - Système de Gestion de Stock Intelligent
-
-Ce dépôt contient la version finale propre et refactorisée du projet **OMISTOCK** (Application Web, Mobile PWA et Mémoire) pour la soutenance.
-
-## 🚀 Lancement rapide avec Docker
-
-Pour faciliter l'évaluation et garantir un environnement d'exécution strictement identique, l'application a été entièrement conteneurisée.
-
-### Prérequis
-* **Docker Desktop** installé et démarré sur votre machine.
-
-### Procédure de lancement
-1. Ouvrez un terminal à la racine du projet `omistock/`.
-2. Exécutez la commande suivante pour construire et lancer l'environnement unifié :
 ```bash
-   docker compose up --build
+# 1. Installer les dépendances
+cd backend
+python -m venv venv
+source venv/bin/activate        # Windows : venv\Scripts\activate
+pip install -r requirements.txt
+
+# 2. Lancer le serveur (API + frontend)
+python main.py                  # équivaut à : uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+La base `stock.db` est créée et peuplée automatiquement au premier démarrage.
+
+## 🌐 Accès à l'application
+
+Le frontend est servi par le backend. Ouvrez dans votre navigateur :
+
+```
+http://localhost:8000/app/index.html
+```
+
+> Important : l'application doit être ouverte via cette URL (et non en `file://`),
+> car le frontend détermine l'URL de l'API à partir de `window.location.origin`.
+
+### Comptes de démonstration
+- **Admin Pharmacie/Tech** : `admin@test.com` / `password123`
+- **Admin Alimentation** : `food_admin@test.com` / `password123`
+
+## 🤖 Serveur MCP
+
+Le serveur MCP fonctionnel se trouve dans `mcp/server.py`. Il lit la base `stock.db`
+et expose des outils d'analyse (`analyze_stock`, `get_business_summary`).
+
+```bash
+pip install -r backend/requirements.txt   # inclut la dépendance `mcp`
+python mcp/server.py
+```
+
+## 📚 Documentation
+
+Voir [docs/installation.md](docs/installation.md) pour les détails d'installation.
