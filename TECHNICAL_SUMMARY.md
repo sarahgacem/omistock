@@ -11,7 +11,7 @@ OMNISTOCK utilise une architecture multi-tenant robuste basée sur l'isolation d
 2. **Transferts Inter-Filiales Sécurisés** : Déplacement de stock atomique (Transaction ACID) avec vérification d'appartenance à la même entreprise.
 3. **Module de Vente & Facturation** : Génération de factures HTML professionnelles et suivi des ventes en temps réel.
 4. **Journaux d'Activité (Audit)** : Traçabilité complète des actions (connexions, ventes, transferts) pour une transparence totale.
-5. **Dashboard Intelligent (MCP)** : Analyse prédictive des stocks et résumé business via une interface IA (Model Context Protocol).
+5. **Serveur MCP (Model Context Protocol)** : Exposition d'outils d'analyse (alertes de stock, résumé business) consommables par un LLM. L'analyse et les recommandations sont produites par le LLM en aval ; le serveur MCP fournit les données.
 
 ## 3. Stack Technique
 - **Backend** : FastAPI (Python 3.13) pour une API asynchrone haute performance.
@@ -81,3 +81,18 @@ erDiagram
         float total_amount
     }
 ```
+
+## 5. Architecture MCP (réelle)
+
+Le serveur MCP fonctionnel est `mcp/server.py`. Il s'agit d'une implémentation
+unique basée sur **FastMCP** qui lit directement la base SQLite `stock.db`.
+
+- **Outils exposés** :
+  - `analyze_stock(company_id)` : liste les produits sous le seuil pour une entreprise.
+  - `get_business_summary(company_id)` : résumé des ventes (jour/total) et des transferts.
+- **Flux** : `LLM (client MCP) → mcp/server.py → SQLite (stock.db)`.
+- **Isolation** : le `company_id` est passé en paramètre des outils.
+- **Dépendance** : `mcp` (déclarée dans `backend/requirements.txt`).
+
+> Note : l'analyse et les recommandations sont générées par le LLM en aval ;
+> le serveur MCP se limite à fournir des données factuelles.

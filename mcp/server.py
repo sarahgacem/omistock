@@ -6,8 +6,8 @@ import os
 # Création du serveur MCP
 mcp = FastMCP("Omistock Intelligence")
 
-# Chemin vers la base de données (on pointe vers celle du backend)
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend", "stock.db"))
+# Chemin vers la base de données (creee a la racine du projet par le backend)
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "stock.db"))
 
 @mcp.tool()
 def analyze_stock(company_id: int):
