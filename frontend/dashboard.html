@@ -2,6 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="/app/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OMISTOCK">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OMISTOCK - Dashboard Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -68,7 +74,7 @@
 <body class="flex min-h-screen">
 
     <!-- Sidebar -->
-    <aside class="sidebar w-72 flex flex-col p-8 text-white fixed h-full z-50">
+    <aside class="sidebar w-72 flex flex-col p-8 text-white fixed h-full z-50 overflow-y-auto">
         <div class="mb-12 flex items-center gap-3">
             <div class="w-10 h-10 bg-emerald-400 rounded-xl flex items-center justify-center">
                 <svg class="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -330,7 +336,7 @@
             window.location.href = 'index.html';
         }
 
-        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8000";
+        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8001";
 
         async function loadDashboard() {
             const savedCompany = localStorage.getItem('omistock_company');
@@ -343,7 +349,7 @@
                 const token = await getAuthToken();
                 if (!token) return;
                 const branchId = document.getElementById('branch_selector').value;
-                const url = branchId ? `${API_BASE}/api/dashboard/stats?branch_id=${branchId}` : `${API_BASE}/api/dashboard/stats`;
+                const url = branchId ? `${API_BASE}/dashboard/stats?branch_id=${branchId}` : `${API_BASE}/dashboard/stats`;
 
                 // Charger les filiales (une seule fois)
                 if (document.getElementById('branch_selector').children.length === 1) {
@@ -666,5 +672,16 @@
         window.onload = loadDashboard;
 
     </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/app/service-worker.js')
+            .then(reg => console.log('SW enregistré:', reg.scope))
+            .catch(err => console.log('SW erreur:', err));
+        });
+      }
+    </script>
 </body>
 </html>
+

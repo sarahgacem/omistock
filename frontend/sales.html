@@ -2,6 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="/app/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OMISTOCK">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OMISTOCK - Commandes</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -102,7 +108,7 @@
     </main>
 
     <script>
-        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8000";
+        const API_BASE = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8001";
 
         async function init() {
             const token = localStorage.getItem('omistock_token');
@@ -162,7 +168,7 @@
                     <td class="py-4 px-6 text-sm text-slate-600">${branchMap[s.branch_id] || 'N/A'}</td>
                     <td class="py-4 px-6 text-sm font-bold text-teal-600">${s.total_amount} DA</td>
                     <td class="py-4 px-6 text-right space-x-2">
-                        <button onclick="window.open('http://localhost:8000/sales/${s.id}/invoice/html', '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
+                        <button onclick="window.open('http://localhost:8001/sales/${s.id}/invoice/html', '_blank')" class="text-slate-400 hover:text-indigo-500" title="Imprimer Facture">
                             <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         </button>
                     </td>
@@ -178,6 +184,16 @@
         }
 
         window.onload = init;
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/app/service-worker.js')
+            .then(reg => console.log('SW enregistré:', reg.scope))
+            .catch(err => console.log('SW erreur:', err));
+        });
+      }
     </script>
 </body>
 </html>

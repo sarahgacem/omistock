@@ -1,0 +1,39 @@
+{
+  "name": "OMISTOCK - Gestion Intelligente du Stock",
+  "short_name": "OMISTOCK",
+  "description": "Système de gestion de stock intelligent avec agent IA intégré",
+  "start_url": "/app/dashboard.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/192/box.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/512/box.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/app/dashboard.html",
+      "description": "Accéder au tableau de bord"
+    },
+    {
+      "name": "Scanner QR",
+      "url": "/app/mobile_scan.html",
+      "description": "Scanner un QR code"
+    }
+  ]
+}
