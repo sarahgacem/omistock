@@ -506,7 +506,7 @@ def get_company(
 @router.put("/api/company", response_model=schemas.CompanyResponse)
 def update_company(
     data: schemas.CompanyUpdate,
-    current_user: models.User = Depends(get_current_admin_or_agent),
+    current_user: models.User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     company = db.query(models.Company).filter(models.Company.id == current_user.company_id).first()
@@ -547,7 +547,7 @@ def export_logs(
 
 @router.get("/api/audit_logs", response_model=List[schemas.AuditLogResponse])
 def get_audit_logs_route(
-    current_user: models.User = Depends(get_current_admin),
+    current_user: models.User = Depends(get_current_admin_or_agent),
     db: Session = Depends(get_db),
 ):
     return repository.get_audit_logs(db, current_user.company_id)
