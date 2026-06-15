@@ -130,14 +130,3 @@ def get_current_admin_or_agent(current_user: models.User = Depends(get_current_u
             detail="Accès réservé aux administrateurs et agents IA."
         )
     return current_user
-def get_current_admin_or_agent(current_user: models.User = Depends(get_current_user)):
-    """
-    Autorise les administrateurs et les agents IA.
-    Utilisé pour les routes MCP en lecture seule.
-    """
-    if current_user.user_type not in ("ADMIN", "AGENT"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès réservé aux administrateurs et agents IA."
-        )
-    return current_user
