@@ -118,3 +118,26 @@ def get_current_agent_by_api_key(api_key: str = None, db: Session = Depends(get_
         )
     
     return user
+
+def get_current_admin_or_agent(current_user: models.User = Depends(get_current_user)):
+    """
+    Permet aux admins ET aux agents IA d'accéder aux routes.
+    Utilisé pour les routes MCP qui nécessitent un accès audit logs.
+    """
+    if current_user.user_type not in ("ADMIN", "AGENT"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs et agents IA."
+        )
+    return current_user
+def get_current_admin_or_agent(current_user: models.User = Depends(get_current_user)):
+    """
+    Autorise les administrateurs et les agents IA.
+    Utilisé pour les routes MCP en lecture seule.
+    """
+    if current_user.user_type not in ("ADMIN", "AGENT"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs et agents IA."
+        )
+    return current_user
