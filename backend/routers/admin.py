@@ -16,7 +16,7 @@ import schemas
 import database
 import seed_data
 from services import log_audit
-from dependencies import get_current_user, get_current_admin, get_current_agent_human
+from dependencies import get_current_user, get_current_admin, get_current_agent_human, get_current_admin_or_agent
 from database import get_db
 
 router = APIRouter()
@@ -506,7 +506,7 @@ def get_company(
 @router.put("/api/company", response_model=schemas.CompanyResponse)
 def update_company(
     data: schemas.CompanyUpdate,
-    current_user: models.User = Depends(get_current_admin),
+    current_user: models.User = Depends(get_current_admin_or_agent),
     db: Session = Depends(get_db)
 ):
     company = db.query(models.Company).filter(models.Company.id == current_user.company_id).first()
