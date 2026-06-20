@@ -74,6 +74,13 @@ class ProductResponse(ProductBase):
     company_id: int
     supplier: Optional[SupplierResponse] = None
     inventory: List[InventoryResponse] = []
+    # Champs dérivés (théorie de gestion de stock) exposés à l'IHM.
+    cost_price: Optional[float] = 0.0          # coût moyen pondéré (WAC)
+    total_quantity: Optional[int] = None       # somme des inventaires (source de vérité)
+    reorder_point: Optional[int] = None        # point de commande calculé
+    avg_daily_demand: Optional[float] = None
+    safety_stock: Optional[int] = None
+    lead_time_days: Optional[int] = None
     class Config:
         from_attributes = True
 
@@ -91,6 +98,8 @@ class StockMovementResponse(BaseModel):
     reason: str
     movement_type: str
     created_at: datetime
+    actor_id: Optional[int] = None          # traçabilité : qui a déclenché
+    correlation_id: Optional[str] = None    # corrélation intention -> action
     class Config:
         from_attributes = True
 
@@ -208,10 +217,16 @@ class AuditLogResponse(BaseModel):
     user_id: int
     user_email: Optional[str] = None
     user_type: Optional[str] = None
+    actor_type: Optional[str] = None
     action: str
     timestamp: datetime
     old_value: Optional[str] = None
     new_value: Optional[str] = None
+    entity_type: Optional[str] = None
+    entity_id: Optional[int] = None
+    correlation_id: Optional[str] = None
+    prev_hash: Optional[str] = None
+    entry_hash: Optional[str] = None
     company_id: int
     class Config:
         from_attributes = True
@@ -311,3 +326,56 @@ class ScanSellRequest(BaseModel):
 class ScanSaleResponse(BaseModel):
     sale: SaleResponse
     name: str
+
+
+# --- GOUVERNANCE / ACTIONS AGENT IA (ajouté au refactor) ---
+class AgentAccessCreateV2(BaseModel):
+    name: str
+    autonomy_level: str = "read_only"           # read_only | suggest | propose | auto
+    agent_scopes: Optional[str] = None          # ex: "stock:read,restock:propose"
+    max_action_quantity: int = 0
+    branch_id: Optional[int] = None
+    api_key_ttl_days: int = 90                   # durée de vie de la clé API
+
+class AgentAccessResponseV2(BaseModel):
+    email: str
+    api_key: str
+    user_type: str
+    autonomy_level: Optional[str] = None
+    agent_scopes: Optional[str] = None
+    api_key_expires_at: Optional[datetime] = None
+
+class AgentRestockProposal(BaseModel):
+    product_id: int
+    branch_id: int
+    quantity: int
+    unit_cost: Optional[float] = 0.0
+    rationale: Optional[str] = None
+
+class AgentProposalResponse(BaseModel):
+    id: int
+    agent_id: int
+    action_type: str
+    payload: str
+    rationale: Optional[str] = None
+    status: str
+    correlation_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+
+# --- Inventaire physique / cycle count (théorie de gestion de stock) ---
+class CycleCountCreate(BaseModel):
+    product_id: int
+    branch_id: int
+    counted_quantity: int                        # quantité réellement comptée (>= 0)
+    reason: Optional[str] = "Comptage physique (cycle count)"
+
+class CycleCountResponse(BaseModel):
+    product_id: int
+    branch_id: int
+    system_before: int
+    counted: int
+    variance: int                                # + excédent / - manquant
+    movement_id: Optional[int] = None

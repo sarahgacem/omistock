@@ -1,0 +1,6 @@
+# OMISTOCK — dépendances de TEST uniquement.
+# Installer en plus de backend/requirements.txt pour exécuter la suite pytest.
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r backend/requirements.txt -r backend/requirements-test.txt
+#   pytest
+pytest==9.1.0

@@ -3,105 +3,134 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from jose import jwt
-import os, sys, pathlib
+import os, sys, pathlib, uuid
 
-# Fix: Ajouter backend et la racine projet au path (imports package + modules plats)
+# Ajouter backend + racine projet au path (imports package + modules plats)
 _backend_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(_backend_dir)
 sys.path.append(os.path.dirname(_backend_dir))
 
-import models, database, security
-from database import engine
+import config
+import models, database, security  # noqa: E402
+from database import engine  # noqa: E402
 
 # Initialisation DB
 models.Base.metadata.create_all(bind=engine)
 
+
 def run_db_migrations():
+    """
+    Migrations additives best-effort pour SQLite (en attendant Alembic).
+    N'ajoute que des colonnes manquantes ; n'altère jamais de données.
+    Pour une vraie migration versionnée, voir docs/migrations.md.
+    """
+    from sqlalchemy import text, inspect
+    additive = {
+        "companies": [("commercial_register_number", "VARCHAR"), ("activity_sector", "VARCHAR"),
+                      ("nif", "VARCHAR"), ("address", "VARCHAR"), ("email", "VARCHAR"), ("phone", "VARCHAR")],
+        "users": [("is_active", "BOOLEAN DEFAULT 1"), ("deletion_deadline", "DATETIME"),
+                  ("api_key", "VARCHAR"), ("autonomy_level", "VARCHAR DEFAULT 'read_only'"),
+                  ("agent_scopes", "VARCHAR"), ("api_key_expires_at", "DATETIME"),
+                  ("max_action_quantity", "INTEGER DEFAULT 0"), ("created_at", "DATETIME")],
+        "suppliers": [("lead_time_days", "INTEGER DEFAULT 7")],
+        "products": [("cost_price", "FLOAT DEFAULT 0"), ("safety_stock", "INTEGER DEFAULT 0"),
+                     ("avg_daily_demand", "FLOAT DEFAULT 0"), ("lead_time_days", "INTEGER DEFAULT 0")],
+        "stock_movements": [("actor_id", "INTEGER"), ("correlation_id", "VARCHAR"),
+                            ("reverses_movement_id", "INTEGER"), ("reversed", "BOOLEAN DEFAULT 0")],
+        "sales": [("total_cost", "FLOAT DEFAULT 0"), ("status", "VARCHAR DEFAULT 'CONFIRMED'"),
+                  ("actor_id", "INTEGER")],
+        "sale_items": [("unit_cost", "FLOAT DEFAULT 0")],
+        "audit_logs": [("actor_type", "VARCHAR"), ("entity_type", "VARCHAR"), ("entity_id", "INTEGER"),
+                       ("correlation_id", "VARCHAR"), ("prev_hash", "VARCHAR"), ("entry_hash", "VARCHAR"),
+                       ("hash_ts", "VARCHAR")],
+        "transfer_requests": [("origin", "VARCHAR DEFAULT 'HUMAIN'")],
+        "purchase_orders": [("branch_id", "INTEGER"), ("received_at", "DATETIME")],
+    }
     try:
-        from sqlalchemy import text
+        insp = inspect(engine)
+        existing_tables = set(insp.get_table_names())
         with engine.connect() as conn:
-            for col in ["commercial_register_number", "activity_sector", "nif", "address", "email", "phone"]:
-                try:
-                    conn.execute(text(f"ALTER TABLE companies ADD COLUMN {col} VARCHAR"))
-                except Exception:
-                    pass
-            try:
-                conn.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"))
-            except Exception:
-                pass
-            try:
-                conn.execute(text("ALTER TABLE users ADD COLUMN deletion_deadline DATETIME"))
-            except Exception:
-                pass
-            try:
-                conn.execute(text("ALTER TABLE users ADD COLUMN api_key VARCHAR"))
-            except Exception:
-                pass
+            for table, cols in additive.items():
+                if table not in existing_tables:
+                    continue
+                present = {c["name"] for c in insp.get_columns(table)}
+                for col, ddl in cols:
+                    if col not in present:
+                        try:
+                            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}"))
+                        except Exception as e:  # colonne déjà créée par create_all
+                            print(f"[MIGRATIONS] skip {table}.{col}: {e}")
             conn.commit()
-        print("[MIGRATIONS] DB migrations applied successfully.")
+        print("[MIGRATIONS] DB migrations appliquées.")
     except Exception as e:
         print(f"[MIGRATIONS] Warning: {e}")
 
+
 run_db_migrations()
 
+
 def auto_seed_if_empty():
+    # Seed automatique UNIQUEMENT hors production (évite les comptes démo en prod).
+    if config.IS_PROD:
+        return
     db = database.SessionLocal()
     try:
-        user_count = db.query(models.User).count()
-        if user_count == 0:
+        if db.query(models.User).count() == 0:
             import seed_data
-            print("[AUTO-SEED] Base vide. Initialisation par défaut...")
+            print("[AUTO-SEED] Base vide (dev). Initialisation par défaut...")
             seed_data.seed(admin_only=False)
     except Exception as e:
         print(f"ERR Auto-seed: {e}")
     finally:
         db.close()
 
+
 auto_seed_if_empty()
 
 app = FastAPI(title="OMISTOCK ERP - API")
 
-# Middlewares
+# CORS : liste d'origines explicite (plus de wildcard avec credentials).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=config.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-Correlation-Id"],
 )
 
-class TenantIsolationMiddleware(BaseHTTPMiddleware):
+
+class CorrelationMiddleware(BaseHTTPMiddleware):
+    """
+    Ajoute un identifiant de corrélation à chaque requête (traçabilité bout-en-bout).
+    NOTE : l'isolation multi-tenant est appliquée dans la couche DAL/dépendances
+    (chaque requête filtre par company_id), pas ici. Ce middleware ne fait donc
+    plus de "fausse" sécurité no-op.
+    """
     async def dispatch(self, request: Request, call_next):
-        # On garde l'isolation pour les ressources sensibles
-        if request.method in ["PUT", "DELETE"] and "/api/" in request.url.path:
-            try:
-                auth_header = request.headers.get("Authorization")
-                if auth_header and "Bearer " in auth_header:
-                    token = auth_header.split(" ")[1]
-                    payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
-                    cid = payload.get("company_id")
-                    # Ici on pourrait ajouter une vérification d'appartenance de la ressource
-                    pass
-            except: pass
-        return await call_next(request)
+        corr = request.headers.get("X-Correlation-Id") or uuid.uuid4().hex
+        request.state.correlation_id = corr
+        response = await call_next(request)
+        response.headers["X-Correlation-Id"] = corr
+        return response
 
-app.add_middleware(TenantIsolationMiddleware)
 
-# Import des Routers
-from routers import auth, products, transfers, admin
+app.add_middleware(CorrelationMiddleware)
+
+# Routers
+from routers import auth, products, transfers, admin, agent  # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(products.router)
 app.include_router(transfers.router)
 app.include_router(admin.router)
+app.include_router(agent.router)
 
-# Gestionnaires d'erreurs
+
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc: HTTPException):
     return JSONResponse(status_code=404, content={"message": "Ressource non trouvée", "path": request.url.path})
 
-# Frontend statique (chemins compatibles local + Docker : OMISTOCK_ROOT=/app)
+
 PROJECT_ROOT = pathlib.Path(
     os.environ.get("OMISTOCK_ROOT", str(pathlib.Path(__file__).resolve().parent.parent))
 )
@@ -111,14 +140,16 @@ if frontend_path.is_dir():
 else:
     print(f"[WARN] Dossier frontend introuvable : {frontend_path}")
 
+
 @app.get("/")
 def read_root():
     return {"status": "online", "message": "OMISTOCK Backend API is running"}
 
+
 @app.get("/health")
 def health_check():
-    """Endpoint de santé pour Render health checks"""
     return {"status": "healthy"}
+
 
 if __name__ == "__main__":
     import uvicorn

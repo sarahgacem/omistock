@@ -1,7 +1,7 @@
 
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Ajouter le chemin du backend pour l'import des modèles
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -165,7 +165,7 @@ def seed(admin_only=False):
                 reason="Réception Stock Initial",
                 movement_type="IN",
                 company_id=company.id,
-                created_at=datetime.now() - timedelta(days=2)
+                created_at=datetime.now(timezone.utc) - timedelta(days=2)
             )
             db.add(mov)
 
@@ -204,7 +204,7 @@ def seed(admin_only=False):
 
         # Ventes sur les 5 derniers jours pour le graphique
         for i in range(5):
-            sale_date = datetime.now() - timedelta(days=i)
+            sale_date = datetime.now(timezone.utc) - timedelta(days=i)
             # Vente d'un produit Saidal (Doliprane ou Amoxicilline)
             p_saidal = products[i % 2] 
             sale = models.Sale(

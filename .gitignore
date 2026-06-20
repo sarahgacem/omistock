@@ -3,11 +3,26 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
+env/
 .env
+*.env
 
-# Database
+# Database & backups (NE JAMAIS committer de données réelles)
 *.db
 *.sqlite3
+*.sqlite
+backup_omistock_*.zip
+backup_*.json
+*.bak
+
+# Logs & tunnels
+*.log
+ngrok_test_log.txt
+*.ngrok
+
+# Artefacts générés
+mobile_qr.png
 
 # OS
 .DS_Store
@@ -16,3 +31,11 @@ Thumbs.db
 # Frontend
 node_modules/
 .vscode/
+
+# Caches d'outils
+.cache/
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/

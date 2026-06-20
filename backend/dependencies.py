@@ -1,132 +1,134 @@
 from fastapi import Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 from database import get_db
-import models, security, schemas
+import models
+import security
 from typing import Optional
+from jose import jwt, JWTError
 
 oauth2_scheme = security.oauth2_scheme
+
+
+def _check_active(user: models.User):
+    if user is not None and getattr(user, "is_active", True) is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Ce compte est actuellement désactivé.",
+        )
+
+
+def _user_from_jwt(token: str, db: Session) -> Optional[models.User]:
+    """Décode le JWT et renvoie l'utilisateur. Lève seulement si le token existe mais est invalide."""
+    try:
+        payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
+    except JWTError:
+        # Token présent mais invalide / expiré : on échoue explicitement (plus de "except: pass").
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expirée ou invalide. Veuillez vous reconnecter.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    email = payload.get("sub")
+    company_id = payload.get("company_id")
+    if not email or company_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token incomplet.")
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Utilisateur introuvable.")
+    _check_active(user)
+    return user
+
+
+def _user_from_api_key(x_api_key: str, db: Session) -> Optional[models.User]:
+    user = (
+        db.query(models.User)
+        .filter(models.User.api_key == x_api_key, models.User.is_active == True)  # noqa: E712
+        .first()
+    )
+    if not user:
+        return None
+    # Expiration de la clé API agent (rotation/expiry obligatoire côté sécurité).
+    exp = getattr(user, "api_key_expires_at", None)
+    if exp is not None:
+        exp_aware = exp if exp.tzinfo else exp.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > exp_aware:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Clé API expirée. Veuillez la faire renouveler par un administrateur.",
+            )
+    _check_active(user)
+    return user
+
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     x_api_key: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
-):
+    db: Session = Depends(get_db),
+) -> models.User:
     """
-    Authentification hybride : accepte JWT Bearer token OU API Key (pour MCP)
-    Priorité : JWT > API Key
+    Authentification hybride : JWT Bearer (humains) OU X-API-Key (agents).
+    L'absence totale d'identifiant => 401 (plus de fallback silencieux sur company_id=1).
     """
-    credentials_exception = HTTPException(
+    if token:
+        return _user_from_jwt(token, db)
+    if x_api_key:
+        user = _user_from_api_key(x_api_key, db)
+        if user:
+            return user
+    raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Session expirée ou invalide. Veuillez vous reconnecter.",
+        detail="Authentification requise.",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
-    # Essayer d'abord JWT (méthode standard)
-    if token:
-        try:
-            from jose import jwt
-            payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
-            email: str = payload.get("sub")
-            company_id: int = payload.get("company_id")
-            if email is None or company_id is None:
-                raise credentials_exception
-            
-            user = db.query(models.User).filter(models.User.email == email).first()
-            if user is None:
-                raise credentials_exception
-                
-            # Freeze database access for deactivated accounts (Instagram style)
-            if hasattr(user, "is_active") and user.is_active == False:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Ce compte est actuellement désactivé."
-                )
-                
-            return user
-        except HTTPException:
-            raise
-        except Exception:
-            # Si JWT échoue, essayer API Key
-            pass
-    
-    # Essayer l'authentification par API Key (pour MCP)
-    if x_api_key:
-        user = db.query(models.User).filter(
-            models.User.api_key == x_api_key,
-            models.User.is_active == True
-        ).first()
-        
-        if user:
-            # Vérifier que le compte n'est pas désactivé
-            if hasattr(user, "is_active") and user.is_active == False:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Ce compte est actuellement désactivé."
-                )
-            return user
-    
-    # Aucune authentification valide
-    raise credentials_exception
+
 
 def get_current_admin(current_user: models.User = Depends(get_current_user)):
     if current_user.user_type != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès réservé aux administrateurs."
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès réservé aux administrateurs.")
     return current_user
 
-def get_current_agent_human(current_user: models.User = Depends(get_current_user)):
+
+def get_current_human(current_user: models.User = Depends(get_current_user)):
+    """Humains uniquement (ADMIN ou HUMAIN). Les agents IA sont refusés."""
     if current_user.user_type not in ("ADMIN", "HUMAIN"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès réservé aux agents humains."
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès réservé aux utilisateurs humains.")
     return current_user
 
-def get_current_agent_ai(current_user: models.User = Depends(get_current_user)):
+
+# Alias rétrocompatible (ancien nom).
+get_current_agent_human = get_current_human
+
+
+def get_current_agent(current_user: models.User = Depends(get_current_user)):
+    """Agents IA uniquement."""
     if current_user.user_type != "AGENT":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès réservé aux agents IA."
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès réservé aux agents IA.")
     return current_user
 
-def get_current_agent_by_api_key(api_key: str = None, db: Session = Depends(get_db)):
-    """
-    Authentification des agents IA via API Key (pour MCP).
-    Alternative à JWT pour les agents qui ne peuvent pas gérer les tokens JWT.
-    """
-    if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API Key manquante.",
-            headers={"WWW-Authenticate": "ApiKey"},
-        )
-    
-    user = db.query(models.User).filter(
-        models.User.api_key == api_key,
-        models.User.user_type == "AGENT",
-        models.User.is_active == True
-    ).first()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API Key invalide ou agent inactif.",
-            headers={"WWW-Authenticate": "ApiKey"},
-        )
-    
-    return user
 
 def get_current_admin_or_agent(current_user: models.User = Depends(get_current_user)):
-    """
-    Permet aux admins ET aux agents IA d'accéder aux routes.
-    Utilisé pour les routes MCP qui nécessitent un accès audit logs.
-    """
     if current_user.user_type not in ("ADMIN", "AGENT"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès réservé aux administrateurs et agents IA."
+            detail="Accès réservé aux administrateurs et agents IA.",
         )
     return current_user
+
+
+def get_optional_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    x_api_key: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+) -> Optional[models.User]:
+    """
+    Renvoie l'utilisateur si une authentification valide est fournie, sinon None.
+    IMPORTANT : ne renvoie JAMAIS un fallback company_id=1 (correction de la faille
+    de bypass multi-tenant). Les routes qui utilisent cette dépendance DOIVENT
+    refuser explicitement le cas None si elles touchent des données d'entreprise.
+    """
+    if token:
+        return _user_from_jwt(token, db)
+    if x_api_key:
+        return _user_from_api_key(x_api_key, db)
+    return None

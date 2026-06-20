@@ -12,7 +12,7 @@ def backup_database():
     if not os.path.exists(backup_dir):
         os.makedirs(backup_dir)
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d_%H%M%S")
     destination = os.path.join(backup_dir, f"stock_backup_{timestamp}.db")
 
     try:

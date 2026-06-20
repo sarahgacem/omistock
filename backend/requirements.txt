@@ -17,7 +17,9 @@ email-validator==2.1.0.post1
 # Authentification JWT & mots de passe
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-bcrypt==4.1.2
+# bcrypt épinglé <4.1 : passlib 1.7.4 lit bcrypt.__about__.__version__,
+# attribut supprimé dans bcrypt>=4.1 (provoque un warning runtime trapped).
+bcrypt==4.0.1
 cryptography==42.0.2
 
 # Upload formulaires (OAuth2 / login)

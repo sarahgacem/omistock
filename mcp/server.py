@@ -1,88 +1,84 @@
+"""
+OMISTOCK — Serveur MCP (interface agent IA).
+
+ALIGNEMENT REFACTOR :
+- Les agents IA possèdent une surface DÉDIÉE et SÉPARÉE de l'interface humaine :
+  ils appellent /api/agent/* (et non les routes humaines /api/*), avec une
+  X-API-Key scoped + expirante. La séparation des interfaces est une best
+  practice "agent-ready".
+- Les LECTURES (alertes, prévision) passent par /api/agent/alerts et
+  /api/agent/forecast/{id} (niveaux READ_ONLY / SUGGEST).
+- Les ÉCRITURES ne sont JAMAIS directes depuis l'outil de chat : l'agent émet une
+  PROPOSITION (/api/agent/proposals/restock) soumise à validation humaine
+  (human-in-the-loop). L'exécution directe /api/agent/restock n'est possible
+  qu'avec un niveau AUTO + scope "restock:auto" + plafond quantité, et reste
+  contrôlée côté backend par agent_policy.
+- Le backend renvoie désormais `on_hand` (stock réel agrégé, source de vérité =
+  Inventory) et `reorder_point` (ROP = demande*délai + stock de sécurité), et non
+  plus un simple champ `quantity`/`min_threshold`.
+
+Toutes les actions sont tracées côté backend (audit chaîné + correlation_id).
+"""
 import os
+
 import httpx
 from mcp.server.fastmcp import FastMCP
 
-# Création du serveur MCP
 mcp = FastMCP("Omistock Intelligence")
 
-# Configuration de l'URL du backend FastAPI (API REST)
+# URL du backend FastAPI.
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
-AGENT_API_KEY = os.getenv("AGENT_API_KEY", "")  # Utilise API Key au lieu de JWT
+# Clé API agent (scoped + expirante), émise par un admin. JAMAIS un JWT humain.
+AGENT_API_KEY = os.getenv("AGENT_API_KEY", "")
 
 
 def get_headers() -> dict:
-    """
-    Utilise l'API Key pour l'authentification MCP.
-    Les agents utilisent des API keys, pas des JWT tokens.
-    """
+    """Authentification agent par X-API-Key (jamais de JWT humain)."""
     if not AGENT_API_KEY:
-        raise ValueError("AGENT_API_KEY non définie. Configurez la variable d'environnement.")
+        raise ValueError(
+            "AGENT_API_KEY non définie. Configurez la variable d'environnement "
+            "avec une clé API agent émise par un administrateur."
+        )
     return {"X-API-Key": AGENT_API_KEY}
+
+
+def _handle_http_error(e: httpx.HTTPStatusError) -> str:
+    code = e.response.status_code
+    if code == 401:
+        return "🔒 Authentification refusée : clé API agent absente, invalide ou EXPIRÉE."
+    if code == 403:
+        # agent_policy : niveau d'autonomie ou scope insuffisant.
+        return f"⛔ Action refusée par la politique d'autonomie de l'agent : {e.response.text}"
+    return f"Erreur API ({code}) : {e.response.text}"
 
 
 @mcp.tool()
 def get_stock_alerts() -> str:
     """
-    Retourne la liste des produits en rupture ou sous le seuil d'alerte.
-    Consomme l'API REST d'OMISTOCK via /api/alerts (authentification API Key).
+    Liste les produits dont le stock réel est sous le point de commande (ROP).
+    Interface agent dédiée : GET /api/agent/alerts (scope stock:read, READ_ONLY+).
     """
     try:
         response = httpx.get(
-            f"{API_BASE_URL}/api/alerts",
+            f"{API_BASE_URL}/api/agent/alerts",
             headers=get_headers(),
-            timeout=10.0
+            timeout=10.0,
         )
         response.raise_for_status()
         alertes = response.json()
 
         if not alertes:
-            return "✅ Tout est en ordre. Aucun produit en alerte."
+            return "✅ Tout est en ordre. Aucun produit sous le point de commande."
 
-        reponse = "⚠️ ALERTE STOCK :\n"
+        reponse = "⚠️ ALERTE STOCK (stock réel <= point de commande) :\n"
         for p in alertes:
-            reponse += f"- {p['name']} : seulement {p.get('quantity', 0)} restants !\n"
+            on_hand = p.get("on_hand", 0)
+            rop = p.get("reorder_point", 0)
+            reponse += f"- {p['name']} : {on_hand} en stock (ROP = {rop})\n"
         return reponse
 
     except httpx.HTTPStatusError as e:
-        return f"Erreur API ({e.response.status_code}) : {e.response.text}"
-    except Exception as e:
-        return f"Erreur lors de l'appel à l'API : {str(e)}"
-
-
-@mcp.tool()
-def get_business_summary() -> str:
-    """
-    Retourne un résumé business : ventes du jour et transferts de stock.
-    Consomme les routes /api/sales et /api/audit_logs de l'API REST d'OMISTOCK.
-    """
-    try:
-        r_sales = httpx.get(
-            f"{API_BASE_URL}/api/sales",
-            headers=get_headers(),
-            timeout=10.0
-        )
-        r_sales.raise_for_status()
-        sales = r_sales.json()
-
-        r_logs = httpx.get(
-            f"{API_BASE_URL}/api/audit_logs",
-            headers=get_headers(),
-            timeout=10.0
-        )
-        r_logs.raise_for_status()
-        logs = r_logs.json()
-
-        nb_ventes = len(sales)
-        ca = sum(s.get("total_amount", 0) for s in sales)
-        nb_transferts = sum(1 for l in logs if "Transfert" in l.get("action", ""))
-
-        resume = f"Vous avez enregistré {nb_ventes} vente(s) pour un total de {ca} DA."
-        if nb_transferts > 0:
-            resume += f" Le système a également enregistré {nb_transferts} transfert(s) de stock."
-        return resume
-
-    except httpx.HTTPStatusError as e:
-        return f"Erreur API ({e.response.status_code}) : {e.response.text}"
+        return _handle_http_error(e)
     except Exception as e:
         return f"Erreur lors de l'appel à l'API : {str(e)}"
 
@@ -90,59 +86,78 @@ def get_business_summary() -> str:
 @mcp.tool()
 def predict_stockout(product_id: int) -> str:
     """
-    Prédit le risque de rupture de stock pour un produit donné.
-    Consomme /api/inventory et /api/sales de l'API REST d'OMISTOCK.
+    Prédit le risque de rupture pour un produit (demande moyenne, ROP, jours
+    avant rupture). Interface agent dédiée : GET /api/agent/forecast/{id}
+    (scope stock:read, niveau SUGGEST+). Le calcul est fait côté backend
+    (données réelles), aucune estimation fabriquée côté agent.
     """
     try:
-        r_inv = httpx.get(
-            f"{API_BASE_URL}/api/inventory",
+        r = httpx.get(
+            f"{API_BASE_URL}/api/agent/forecast/{product_id}",
             headers=get_headers(),
-            timeout=10.0
+            timeout=10.0,
         )
-        r_inv.raise_for_status()
-        inventory = r_inv.json()
+        r.raise_for_status()
+        f = r.json()
 
-        product = next((p for p in inventory if p.get("id") == product_id), None)
-        if not product:
-            return f"Produit {product_id} introuvable."
+        name = f.get("name", f"Produit {product_id}")
+        on_hand = f.get("on_hand", f.get("quantity", 0))
+        avg = f.get("avg_daily_demand", 0)
+        rop = f.get("reorder_point", 0)
+        days = f.get("days_until_stockout")
+        lead = f.get("lead_time_days", 0)
 
-        quantity = product.get("quantity", 0)
-        threshold = product.get("min_threshold", 5)
-        name = product.get("name", f"Produit {product_id}")
-
-        r_sales = httpx.get(
-            f"{API_BASE_URL}/api/sales",
-            headers=get_headers(),
-            timeout=10.0
+        msg = (
+            f"{name} : {on_hand} en stock, demande ~{avg}/jour, "
+            f"point de commande (ROP) = {rop}, délai d'appro = {lead} j."
         )
-        r_sales.raise_for_status()
-        sales = r_sales.json()
-
-        # Calcul de la consommation moyenne journalière
-        product_sales = [
-            item
-            for s in sales
-            for item in s.get("items", [])
-            if item.get("product_id") == product_id
-        ]
-        total_sold = sum(i.get("quantity", 0) for i in product_sales)
-        avg_daily = round(total_sold / 30, 2) if total_sold > 0 else 0
-
-        if avg_daily > 0 and quantity > 0:
-            days_left = round(quantity / avg_daily)
-            if days_left <= 7:
-                return (f"🔴 RISQUE ÉLEVÉ — {name} : {quantity} unités restantes, "
-                        f"consommation ~{avg_daily}/jour → rupture dans ~{days_left} jour(s).")
+        if days is not None:
+            if days <= lead:
+                msg = f"🔴 RISQUE ÉLEVÉ — rupture dans ~{days} j (< délai d'appro {lead} j). " + msg
             else:
-                return (f"🟢 Stock correct — {name} : {quantity} unités restantes, "
-                        f"consommation ~{avg_daily}/jour → rupture estimée dans ~{days_left} jour(s).")
-        elif quantity <= threshold:
-            return f"🟠 ATTENTION — {name} : {quantity} unités, sous le seuil d'alerte ({threshold})."
-        else:
-            return f"🟢 Stock correct — {name} : {quantity} unités (seuil : {threshold})."
+                msg = f"🟢 Stock suffisant — rupture estimée dans ~{days} j. " + msg
+        return msg
 
     except httpx.HTTPStatusError as e:
-        return f"Erreur API ({e.response.status_code}) : {e.response.text}"
+        return _handle_http_error(e)
+    except Exception as e:
+        return f"Erreur lors de l'appel à l'API : {str(e)}"
+
+
+@mcp.tool()
+def propose_restock(product_id: int, branch_id: int, quantity: int,
+                    unit_cost: float = 0.0, rationale: str = "") -> str:
+    """
+    Émet une PROPOSITION de réapprovisionnement soumise à validation HUMAINE
+    (human-in-the-loop). POST /api/agent/proposals/restock
+    (scope restock:propose, niveau PROPOSE+).
+
+    L'agent ne modifie JAMAIS le stock directement via cet outil : il propose, un
+    humain approuve/rejette ensuite (séparation des responsabilités). La proposition
+    et son éventuelle exécution sont auditées avec un correlation_id partagé.
+    """
+    try:
+        payload = {
+            "product_id": product_id,
+            "branch_id": branch_id,
+            "quantity": quantity,
+            "unit_cost": unit_cost,
+            "rationale": rationale,
+        }
+        r = httpx.post(
+            f"{API_BASE_URL}/api/agent/proposals/restock",
+            headers=get_headers(),
+            json=payload,
+            timeout=10.0,
+        )
+        r.raise_for_status()
+        data = r.json()
+        return (
+            f"📝 Proposition de réappro créée (#{data.get('proposal_id')}). "
+            f"Statut : {data.get('status')}. En attente de validation par un humain."
+        )
+    except httpx.HTTPStatusError as e:
+        return _handle_http_error(e)
     except Exception as e:
         return f"Erreur lors de l'appel à l'API : {str(e)}"
 
